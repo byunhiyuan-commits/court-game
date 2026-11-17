@@ -1013,7 +1013,7 @@
 
     <!-- ==================== 2. TEACHER TV SCREEN ==================== -->
     <section id="screen-teacher" class="hidden">
-      <!-- Top Bar showing Current Class & Simple 2 Tabs -->
+      <!-- Top Bar showing Current Class & Simple 2 Tabs + Refresh Button -->
       <div class="teacher-tabs">
         <span style="background:var(--gold-light); border:2px solid var(--gold); color:#92400e; padding:10px 18px; border-radius:999px; font-weight:900; font-size:1rem;" id="teacherCurrentClassBadge">
           🏛️ 1학년 7반 대법원
@@ -1023,6 +1023,9 @@
         </button>
         <button class="teacher-tab" id="tabBtnResults" onclick="App.setTeacherTab('results')">
           ② 우리 반 판결 결과 & 박빙 1~3위 보기
+        </button>
+        <button class="btn btn-emerald btn-sm" id="btnRefreshSync" onclick="App.manualRefreshResults()" style="border-radius:999px; padding:10px 18px; font-weight:900; box-shadow:0 4px 12px rgba(5,150,105,0.25);">
+          🔄 실시간 결과 새로고침
         </button>
       </div>
 
@@ -1486,92 +1489,168 @@
     }
 
     /* ============================================================================
-       3. REAL-TIME SYNC ENGINE (MQTT over WSS + Local BroadcastChannel)
+       3. MULTI-CHANNEL REAL-TIME SYNC ENGINE (HTTPS Port 443 + Multi-MQTT Retained + Local)
        ============================================================================ */
     const Net = {
-      mqttClient: null,
+      clients: [],
       bc: null,
-      connected: false,
-      roomCode: '107',
-      topicPrefix: 'agy-court-balance-2026-v3',
+      sse: null,
+      roomCode: '101',
+      topicPrefix: 'agy-court-balance-2026-v4',
+      ntfyPrefix: 'agy_court_2026_v4_room_',
 
       init() {
         if ('BroadcastChannel' in window) {
-          this.bc = new BroadcastChannel('agy_court_balance_channel_v3');
+          this.bc = new BroadcastChannel('agy_court_balance_channel_v4');
           this.bc.onmessage = (ev) => {
-            if (ev.data) App.handleIncomingMessage(ev.data.type, ev.data.payload, ev.data.room);
+            if (ev.data) App.handleIncomingMessage(ev.data.type, ev.data.payload, ev.data.room, ev.data.ts);
           };
         }
         window.addEventListener('storage', (ev) => {
-          if (ev.key === 'agy_court_bus_event_v3' && ev.newValue) {
+          if (ev.key === 'agy_court_bus_event_v4' && ev.newValue) {
             try {
               const msg = JSON.parse(ev.newValue);
-              App.handleIncomingMessage(msg.type, msg.payload, msg.room);
+              App.handleIncomingMessage(msg.type, msg.payload, msg.room, msg.ts);
             } catch (e) {}
           }
         });
 
-        this.connectMqtt('wss://broker.emqx.io:8084/mqtt', 'wss://broker.hivemq.com:8884/mqtt');
+        // Connect simultaneously to multiple public WSS MQTT brokers (Port 443 & 8084/8884)
+        const brokers = [
+          'wss://mqtt.eclipseprojects.io:443/mqtt',
+          'wss://broker.emqx.io:8084/mqtt',
+          'wss://broker.hivemq.com:8884/mqtt'
+        ];
+        if (typeof mqtt !== 'undefined') {
+          brokers.forEach(url => this.connectBroker(url));
+        }
       },
 
-      connectMqtt(primaryUrl, backupUrl) {
-        if (typeof mqtt === 'undefined') return;
+      connectBroker(url) {
         try {
-          const clientId = 'agy_court_' + Math.random().toString(36).substring(2, 10);
-          this.mqttClient = mqtt.connect(primaryUrl, {
+          const clientId = 'agy_' + Math.random().toString(36).substring(2, 10);
+          const client = mqtt.connect(url, {
             clientId,
             clean: true,
-            connectTimeout: 5000,
+            connectTimeout: 6000,
             reconnectPeriod: 3000
           });
 
-          this.mqttClient.on('connect', () => {
-            this.connected = true;
-            this.subscribeRoom(this.roomCode);
+          client.on('connect', () => {
+            client.subscribe(`${this.topicPrefix}/room/${this.roomCode}/#`, { qos: 1 });
+            client.subscribe(`${this.topicPrefix}/global/questions`, { qos: 1 });
           });
 
-          this.mqttClient.on('error', () => {
-            if (!this.connected && backupUrl) {
-              this.mqttClient.end(true);
-              this.connectMqtt(backupUrl, null);
-            }
-          });
-
-          this.mqttClient.on('message', (topic, message) => {
+          client.on('message', (topic, message) => {
             try {
               const data = JSON.parse(message.toString());
-              App.handleIncomingMessage(data.type, data.payload, data.room);
+              App.handleIncomingMessage(data.type, data.payload, data.room, data.ts);
             } catch (e) {}
           });
+
+          this.clients.push(client);
         } catch (err) {}
       },
 
       subscribeRoom(roomCode) {
-        this.roomCode = String(roomCode).trim() || '107';
-        if (this.mqttClient && this.connected) {
-          this.mqttClient.subscribe(`${this.topicPrefix}/room/${this.roomCode}/#`, { qos: 0 });
-          this.mqttClient.subscribe(`${this.topicPrefix}/global/questions`, { qos: 0 });
+        this.roomCode = String(roomCode).trim() || '101';
+        this.clients.forEach(client => {
+          try {
+            client.subscribe(`${this.topicPrefix}/room/${this.roomCode}/#`, { qos: 1 });
+            client.subscribe(`${this.topicPrefix}/global/questions`, { qos: 1 });
+          } catch (e) {}
+        });
+
+        // Also connect HTTPS Port 443 SSE stream (ntfy.sh) for firewall-proof real-time delivery
+        if (this.sse) {
+          try { this.sse.close(); } catch (e) {}
+          this.sse = null;
         }
+        if (typeof EventSource !== 'undefined') {
+          try {
+            const sseUrl = `https://ntfy.sh/${this.ntfyPrefix}${this.roomCode}/sse?since=6h`;
+            this.sse = new EventSource(sseUrl);
+            this.sse.onmessage = (ev) => {
+              try {
+                const outer = JSON.parse(ev.data);
+                if (outer && outer.message) {
+                  const data = JSON.parse(outer.message);
+                  App.handleIncomingMessage(data.type, data.payload, data.room, data.ts);
+                }
+              } catch (e) {}
+            };
+          } catch (e) {}
+        }
+
+        // Initial pull of cached room history over HTTPS
+        this.pullCloudRoomHistory(this.roomCode);
       },
 
-      publish(type, payload, retain = false, subtopic = 'events') {
+      async pullCloudRoomHistory(roomCode) {
+        const r = String(roomCode || this.roomCode);
+        // 1. Re-trigger MQTT retained delivery
+        this.clients.forEach(client => {
+          try {
+            if (client.connected) {
+              client. unsubscribe(`${this.topicPrefix}/room/${r}/#`, () => {
+                client.subscribe(`${this.topicPrefix}/room/${r}/#`, { qos: 1 });
+              });
+            }
+          } catch (e) {}
+        });
+
+        // 2. Pull HTTPS Port 443 cached messages from ntfy.sh
+        try {
+          const res = await fetch(`https://ntfy.sh/${this.ntfyPrefix}${r}/json?poll=1&since=6h`, { cache: 'no-store' });
+          if (res.ok) {
+            const text = await res.text();
+            const lines = text.split('\n').filter(Boolean);
+            lines.forEach(line => {
+              try {
+                const outer = JSON.parse(line);
+                if (outer && outer.message) {
+                  const data = JSON.parse(outer.message);
+                  App.handleIncomingMessage(data.type, data.payload, data.room, data.ts);
+                }
+              } catch (e) {}
+            });
+          }
+        } catch (e) {}
+      },
+
+      publish(type, payload, retain = true, subtopic = 'events') {
         const packet = {
           type,
           payload,
           room: this.roomCode,
           ts: Date.now()
         };
+        const jsonStr = JSON.stringify(packet);
 
+        // 1. Local BroadcastChannel + localStorage
         if (this.bc) this.bc.postMessage(packet);
         try {
-          localStorage.setItem('agy_court_bus_event_v3', JSON.stringify(packet));
+          localStorage.setItem('agy_court_bus_event_v4', jsonStr);
         } catch (e) {}
 
-        if (this.mqttClient && this.connected) {
-          const topic = subtopic === 'global_questions'
-            ? `${this.topicPrefix}/global/questions`
-            : `${this.topicPrefix}/room/${this.roomCode}/${subtopic}`;
-          this.mqttClient.publish(topic, JSON.stringify(packet), { qos: 0, retain });
+        // 2. All MQTT Brokers (mqtt.js queues messages automatically even if still connecting!)
+        const topic = subtopic === 'global_questions'
+          ? `${this.topicPrefix}/global/questions`
+          : `${this.topicPrefix}/room/${this.roomCode}/${subtopic}`;
+        this.clients.forEach(client => {
+          try {
+            client.publish(topic, jsonStr, { qos: 1, retain });
+          } catch (e) {}
+        });
+
+        // 3. HTTPS Port 443 POST to ntfy.sh
+        if (subtopic !== 'global_questions') {
+          try {
+            fetch(`https://ntfy.sh/${this.ntfyPrefix}${this.roomCode}`, {
+              method: 'POST',
+              body: jsonStr
+            }).catch(() => {});
+          } catch (e) {}
         }
       }
     };
@@ -1636,13 +1715,6 @@
         if (savedClassMap) {
           try { this.classQuestionsMap = JSON.parse(savedClassMap); } catch (e) { this.classQuestionsMap = {}; }
         }
-
-        // Pre-seed 1학년 7반 (Room 107) with 21-student realistic sample if not yet initialized
-        if (!localStorage.getItem('agy_court_room_v3_107')) {
-          const sample107 = buildClass107SampleState();
-          localStorage.setItem('agy_court_room_v3_107', JSON.stringify(sample107));
-        }
-        // Also custom-tweak Q3 in 1학년 7반 slightly or keep all 10 questions ready for 1-7
 
         // Restore Custom Teacher Password if saved
         const savedPw = localStorage.getItem('agy_court_teacher_pw_v3');
@@ -1791,39 +1863,64 @@
       },
 
       loadRoomFromStorage(r) {
-        const saved = localStorage.getItem(`agy_court_room_v3_${r}`);
+        const saved = localStorage.getItem(`agy_court_room_v4_${r}`);
         if (saved) {
           try {
             this.state = JSON.parse(saved);
             if (!this.state.students) this.state.students = {};
             if (!this.state.votes1) this.state.votes1 = {};
             if (!this.state.hotPicks) this.state.hotPicks = {};
+            if (!this.state.resetAt) this.state.resetAt = 0;
           } catch (e) {
-            this.state = { students: {}, votes1: {}, hotPicks: {} };
+            this.state = { students: {}, votes1: {}, hotPicks: {}, resetAt: 0 };
           }
         } else {
-          this.state = { students: {}, votes1: {}, hotPicks: {} };
+          this.state = { students: {}, votes1: {}, hotPicks: {}, resetAt: 0 };
         }
       },
 
       saveRoomToStorage() {
         try {
-          localStorage.setItem(`agy_court_room_v3_${this.roomCode}`, JSON.stringify(this.state));
+          localStorage.setItem(`agy_court_room_v4_${this.roomCode}`, JSON.stringify(this.state));
         } catch (e) {}
       },
 
-      /* -------------------- Teacher Mode -------------------- */
+      /* -------------------- Teacher Mode & Real-Time Refresh -------------------- */
       startTeacherMode() {
         const r = document.getElementById('teacherRoomInput').value.trim() || '101';
         this.roomCode = r;
-        Net.subscribeRoom(r);
         this.loadRoomFromStorage(r);
+        Net.subscribeRoom(r);
 
-        // Always open to Lobby (QR Code & Live Voting Status) first so students can scan the QR code!
+        // Start automatic background pull every 4 seconds while in Teacher Mode
+        if (this.teacherSyncTimer) clearInterval(this.teacherSyncTimer);
+        this.teacherSyncTimer = setInterval(() => {
+          if (this.role === 'teacher') {
+            Net.pullCloudRoomHistory(this.roomCode);
+          }
+        }, 4000);
+
         this.teacherTab = 'lobby';
         this.showScreen('teacher');
         this.renderTeacherLobbyInfo();
         this.setTeacherTab(this.teacherTab);
+      },
+
+      async manualRefreshResults() {
+        const btn = document.getElementById('btnRefreshSync');
+        if (btn) {
+          btn.disabled = true;
+          btn.textContent = '🔄 불러오는 중...';
+        }
+        await Net.pullCloudRoomHistory(this.roomCode);
+        this.renderTeacherView();
+        if (btn) {
+          btn.textContent = '✅ 최신 결과 반영 완료!';
+          setTimeout(() => {
+            btn.disabled = false;
+            btn.textContent = '🔄 실시간 결과 새로고침';
+          }, 1200);
+        }
       },
 
       setTeacherTab(tab) {
@@ -1832,6 +1929,7 @@
         document.getElementById('tabBtnResults').classList.toggle('active', tab === 'results');
         document.getElementById('t-page-lobby').classList.toggle('hidden', tab !== 'lobby');
         document.getElementById('t-page-results').classList.toggle('hidden', tab !== 'results');
+        Net.pullCloudRoomHistory(this.roomCode);
         this.renderTeacherView();
       },
 
@@ -1869,16 +1967,18 @@
 
       resetRoomConfirm() {
         if (!confirm(`${this.formatClassName(this.roomCode)}의 참여 학생 및 투표 기록을 모두 초기화할까요?`)) return;
-        this.state = { students: {}, votes1: {}, hotPicks: {} };
+        const now = Date.now();
+        this.state = { students: {}, votes1: {}, hotPicks: {}, resetAt: now };
         this.saveRoomToStorage();
-        Net.publish('room_state', { state: this.state }, true, 'state');
+        Net.publish('room_reset', { resetAt: now }, true, 'reset');
         this.renderTeacherView();
       },
 
       populate21StudentsSample() {
-        this.state = buildClass107SampleState();
+        const sample = buildClass107SampleState();
+        sample.resetAt = Date.now();
+        this.state = sample;
         this.saveRoomToStorage();
-        Net.publish('room_state', { state: this.state }, true, 'state');
         this.renderTeacherView();
       },
 
@@ -2266,12 +2366,26 @@
         }
 
         this.showScreen('student');
-        Net.publish('student_join', {
+        this.publishMyStudentSnapshot();
+        this.renderStudentView();
+      },
+
+      publishMyStudentSnapshot() {
+        const myVotes = {};
+        Object.entries(this.state.votes1 || {}).forEach(([qId, map]) => {
+          if (map && map[this.studentId]) myVotes[qId] = map[this.studentId];
+        });
+        const myHots = [];
+        Object.entries(this.state.hotPicks || {}).forEach(([qId, arr]) => {
+          if (Array.isArray(arr) && arr.includes(this.studentId)) myHots.push(qId);
+        });
+        Net.publish('student_snapshot', {
           studentId: this.studentId,
           num: this.studentNum,
-          name: this.studentName
-        });
-        this.renderStudentView();
+          name: this.studentName,
+          myVotes,
+          myHots
+        }, true, `student/${this.studentId}`);
       },
 
       studentSelectQ(idx) {
@@ -2306,14 +2420,7 @@
         if (!this.state.votes1[q.id]) this.state.votes1[q.id] = {};
         this.state.votes1[q.id][this.studentId] = choice;
         this.saveRoomToStorage();
-
-        Net.publish('student_vote1', {
-          studentId: this.studentId,
-          num: this.studentNum,
-          name: this.studentName,
-          qId: q.id,
-          choice
-        });
+        this.publishMyStudentSnapshot();
 
         this.renderStudentView();
 
@@ -2337,10 +2444,7 @@
         else list.splice(idx, 1);
 
         this.saveRoomToStorage();
-        Net.publish('student_hotpick', {
-          studentId: this.studentId,
-          qId
-        });
+        this.publishMyStudentSnapshot();
         this.renderStudentView();
       },
 
@@ -2406,7 +2510,7 @@
       },
 
       /* -------------------- Incoming Sync Handler -------------------- */
-      handleIncomingMessage(type, payload, msgRoom) {
+      handleIncomingMessage(type, payload, msgRoom, msgTs) {
         if (type === 'global_questions' && payload) {
           if (payload.target === 'common' && Array.isArray(payload.questions)) {
             this.commonQuestions = payload.questions;
@@ -2422,8 +2526,50 @@
 
         if (String(msgRoom) !== String(this.roomCode)) return;
 
-        if (type === 'room_state' && this.role === 'student' && payload.state) {
-          this.renderStudentView();
+        if (type === 'room_reset' && payload && payload.resetAt) {
+          if (!this.state.resetAt || payload.resetAt > this.state.resetAt) {
+            this.state = { students: {}, votes1: {}, hotPicks: {}, resetAt: payload.resetAt };
+            this.saveRoomToStorage();
+            if (this.role === 'teacher') this.renderTeacherView();
+          }
+          return;
+        }
+
+        // Ignore stale cached events older than the latest room reset
+        if (msgTs && this.state.resetAt && msgTs < this.state.resetAt) {
+          return;
+        }
+
+        if (type === 'student_snapshot' && payload && payload.studentId) {
+          const { studentId, num, name, myVotes, myHots } = payload;
+          this.state.students[studentId] = {
+            id: studentId,
+            num: num || 99,
+            name: name || studentId,
+            joinedAt: msgTs || Date.now()
+          };
+          if (myVotes && typeof myVotes === 'object') {
+            Object.entries(myVotes).forEach(([qId, ch]) => {
+              if (!this.state.votes1[qId]) this.state.votes1[qId] = {};
+              this.state.votes1[qId][studentId] = ch;
+            });
+          }
+          if (Array.isArray(myHots)) {
+            if (!this.state.hotPicks) this.state.hotPicks = {};
+            Object.keys(this.state.hotPicks).forEach(qId => {
+              const arr = this.state.hotPicks[qId];
+              const idx = arr.indexOf(studentId);
+              if (idx !== -1 && !myHots.includes(qId)) arr.splice(idx, 1);
+            });
+            myHots.forEach(qId => {
+              if (!this.state.hotPicks[qId]) this.state.hotPicks[qId] = [];
+              if (!this.state.hotPicks[qId].includes(studentId)) {
+                this.state.hotPicks[qId].push(studentId);
+              }
+            });
+          }
+          this.saveRoomToStorage();
+          if (this.role === 'teacher') this.renderTeacherView();
           return;
         }
 
