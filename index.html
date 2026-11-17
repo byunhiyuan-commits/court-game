@@ -1,0 +1,2691 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>우리 반 대법원 : 판결 밸런스 게임</title>
+  <!-- Pretendard Font -->
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <!-- MQTT.js for Real-Time Sync -->
+  <script src="https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js"></script>
+  <!-- QRCode.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    :root {
+      --bg-cream: #f7f3eb;
+      --bg-paper: #ffffff;
+      --bg-soft: #efe9dc;
+      --navy: #1e3a5f;
+      --navy-dark: #152943;
+      --wood: #8b5a2b;
+      --gold: #d97706;
+      --gold-light: #fef3c7;
+      --gold-border: #f59e0b;
+      --side-a: #2563eb;
+      --side-a-light: #eff6ff;
+      --side-a-border: #93c5fd;
+      --side-b: #e11d48;
+      --side-b-light: #fff1f2;
+      --side-b-border: #fda4af;
+      --emerald: #059669;
+      --emerald-light: #ecfdf5;
+      --text-main: #1e293b;
+      --text-sub: #475569;
+      --text-muted: #94a3b8;
+      --border: #e2d9c8;
+      --shadow-sm: 0 4px 12px rgba(30, 58, 95, 0.07);
+      --shadow-md: 0 10px 25px rgba(30, 58, 95, 0.11);
+      --radius-lg: 22px;
+      --radius-md: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-cream);
+      background-image:
+        radial-gradient(at 15% 10%, rgba(254, 243, 199, 0.7) 0px, transparent 50%),
+        radial-gradient(at 85% 90%, rgba(219, 234, 254, 0.6) 0px, transparent 50%);
+      color: var(--text-main);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    /* Top Courtroom Header Bar */
+    .top-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 24px;
+      background: var(--navy);
+      color: #ffffff;
+      border-bottom: 4px solid var(--gold-border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      flex-wrap: wrap;
+      gap: 10px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 1.18rem;
+      cursor: pointer;
+      color: #fff;
+    }
+
+    .brand-badge {
+      background: var(--gold-border);
+      color: #1e293b;
+      font-size: 0.76rem;
+      font-weight: 800;
+      padding: 3px 10px;
+      border-radius: 999px;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 18px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.16s ease;
+      text-decoration: none;
+      user-select: none;
+      background: #fff;
+      color: var(--text-main);
+    }
+    .btn:hover { transform: translateY(-1px); filter: brightness(0.97); }
+    .btn:active { transform: translateY(0); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+    .btn-xs { padding: 5px 11px; font-size: 0.78rem; border-radius: 8px; }
+    .btn-sm { padding: 7px 14px; font-size: 0.86rem; border-radius: 10px; }
+    .btn-lg { padding: 14px 26px; font-size: 1.08rem; border-radius: 14px; }
+    .btn-xl { padding: 16px 32px; font-size: 1.2rem; border-radius: 16px; }
+
+    .btn-navy {
+      background: var(--navy);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(30, 58, 95, 0.25);
+    }
+    .btn-gold {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(217, 119, 6, 0.3);
+    }
+    .btn-blue {
+      background: var(--side-a);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+    }
+    .btn-emerald {
+      background: var(--emerald);
+      color: #fff;
+    }
+    .btn-outline {
+      background: #ffffff;
+      border: 1.5px solid var(--border);
+      color: var(--text-main);
+    }
+    .btn-nav-top {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #fff;
+    }
+    .btn-nav-top:hover { background: rgba(255, 255, 255, 0.22); }
+
+    /* Container */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px 18px 60px;
+    }
+
+    /* Courtroom Hero Banner with Characters */
+    .court-hero {
+      background: linear-gradient(180deg, #ffffff 0%, #fdf9f0 100%);
+      border: 2px solid var(--border);
+      border-top: 6px solid var(--navy);
+      border-radius: var(--radius-lg);
+      padding: 26px 24px;
+      text-align: center;
+      box-shadow: var(--shadow-md);
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    .court-pillars {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 24px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .character-illust {
+      width: 90px;
+      height: 90px;
+      flex-shrink: 0;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.08));
+    }
+
+    .hero-eyebrow {
+      display: inline-block;
+      padding: 5px 14px;
+      border-radius: 999px;
+      background: var(--gold-light);
+      color: #92400e;
+      font-weight: 800;
+      font-size: 0.85rem;
+      margin-bottom: 8px;
+      border: 1px solid #fcd34d;
+    }
+
+    .hero-title {
+      font-size: clamp(1.75rem, 3.5vw, 2.45rem);
+      font-weight: 900;
+      color: var(--navy);
+      letter-spacing: -0.02em;
+      margin-bottom: 6px;
+    }
+
+    .hero-desc {
+      color: var(--text-sub);
+      font-size: 0.98rem;
+      max-width: 650px;
+      margin: 0 auto;
+      font-weight: 500;
+    }
+
+    /* Home Role Selection Cards */
+    .role-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+      gap: 24px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .role-card {
+      background: var(--bg-paper);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 26px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 18px;
+      box-shadow: var(--shadow-md);
+      transition: transform 0.2s;
+    }
+    .role-card:hover { transform: translateY(-3px); }
+    .role-card.teacher-card { border-top: 6px solid var(--gold); }
+    .role-card.student-card { border-top: 6px solid var(--side-a); }
+
+    .card-header-flex {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 10px;
+    }
+
+    .role-title { font-size: 1.35rem; font-weight: 900; color: var(--navy); }
+    .role-sub { color: var(--text-sub); font-size: 0.92rem; margin-bottom: 14px; }
+
+    /* Form Controls */
+    .input, .select {
+      width: 100%;
+      padding: 11px 14px;
+      border-radius: 10px;
+      border: 1.5px solid #cbd5e1;
+      background: #ffffff;
+      color: var(--text-main);
+      font-size: 0.96rem;
+      font-weight: 600;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .input:focus, .select:focus { border-color: var(--side-a); box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
+    .label {
+      display: block;
+      font-size: 0.84rem;
+      font-weight: 800;
+      color: var(--navy);
+      margin-bottom: 6px;
+    }
+
+    /* Class Room Selector Grid */
+    .class-chips {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 7px;
+      margin-bottom: 10px;
+    }
+    .class-chip {
+      padding: 9px 6px;
+      border-radius: 9px;
+      background: #f1f5f9;
+      border: 2px solid transparent;
+      color: var(--text-sub);
+      font-weight: 800;
+      font-size: 0.88rem;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+      position: relative;
+    }
+    .class-chip:hover { background: #e2e8f0; }
+    .class-chip.active {
+      background: var(--gold-light);
+      border-color: var(--gold);
+      color: #92400e;
+    }
+
+    /* Panel */
+    .panel {
+      background: var(--bg-paper);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: var(--shadow-md);
+      margin-bottom: 22px;
+    }
+
+    /* Teacher Top Simple 2-Step Switcher */
+    .teacher-tabs {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 22px;
+      flex-wrap: wrap;
+    }
+    .teacher-tab {
+      padding: 12px 24px;
+      border-radius: 999px;
+      font-size: 1.02rem;
+      font-weight: 800;
+      background: #fff;
+      color: var(--text-sub);
+      border: 2px solid var(--border);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.15s;
+    }
+    .teacher-tab.active {
+      background: var(--navy);
+      color: #fff;
+      border-color: var(--navy);
+      box-shadow: 0 6px 18px rgba(30, 58, 95, 0.25);
+    }
+
+    /* Lobby Grid */
+    .lobby-grid {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 24px;
+      align-items: stretch;
+    }
+    @media (max-width: 880px) {
+      .lobby-grid { grid-template-columns: 1fr; }
+    }
+
+    .qr-wrapper {
+      background: #fff;
+      padding: 14px;
+      border-radius: 16px;
+      border: 2px solid var(--border);
+      width: fit-content;
+      margin: 12px auto;
+    }
+
+    .room-code-box {
+      font-size: 1.9rem;
+      font-weight: 900;
+      color: var(--navy);
+      background: var(--gold-light);
+      border: 2px dashed var(--gold);
+      border-radius: 12px;
+      padding: 6px 16px;
+      text-align: center;
+      margin: 8px 0;
+    }
+
+    .student-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+      max-height: 330px;
+      overflow-y: auto;
+    }
+    .student-badge {
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: #f8fafc;
+      border: 1.5px solid #cbd5e1;
+      font-weight: 700;
+      font-size: 0.92rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .student-badge.done {
+      background: var(--emerald-light);
+      border-color: #6ee7b7;
+      color: #065f46;
+    }
+
+    /* Top 1~3 Closest Issues Podium Cards */
+    .top3-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 18px;
+      margin-top: 16px;
+    }
+
+    .top3-card {
+      background: #fffdf9;
+      border: 2.5px solid var(--gold-border);
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 14px;
+      position: relative;
+    }
+    .top3-card.rank-1 {
+      background: linear-gradient(180deg, #fffbeb 0%, #ffffff 100%);
+      border-width: 3px;
+      border-color: #d97706;
+      box-shadow: 0 10px 26px rgba(217, 119, 6, 0.16);
+    }
+
+    .medal-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 13px;
+      border-radius: 999px;
+      font-weight: 900;
+      font-size: 0.86rem;
+    }
+    .medal-1 { background: #fef3c7; color: #92400e; border: 1.5px solid #f59e0b; }
+    .medal-2 { background: #f1f5f9; color: #334155; border: 1.5px solid #94a3b8; }
+    .medal-3 { background: #ffedd5; color: #9a3412; border: 1.5px solid #fb923c; }
+
+    /* Tug of War Result Bar */
+    .tug-bar {
+      height: 44px;
+      width: 100%;
+      background: #e2e8f0;
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      position: relative;
+      border: 1px solid #cbd5e1;
+    }
+    .tug-a {
+      background: linear-gradient(90deg, #1d4ed8, #3b82f6);
+      height: 100%;
+      display: flex;
+      align-items: center;
+      padding-left: 14px;
+      font-weight: 900;
+      font-size: 1rem;
+      color: #fff;
+      transition: width 0.5s ease;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+    .tug-b {
+      background: linear-gradient(90deg, #f43f5e, #e11d48);
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 14px;
+      font-weight: 900;
+      font-size: 1rem;
+      color: #fff;
+      transition: width 0.5s ease;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+    .center-line {
+      position: absolute;
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: rgba(255, 255, 255, 0.85);
+      z-index: 2;
+    }
+
+    /* Voter Name Lists inside Result Cards */
+    .voter-columns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 6px;
+    }
+    .voter-box-a {
+      background: var(--side-a-light);
+      border: 1px solid var(--side-a-border);
+      border-radius: 10px;
+      padding: 9px 11px;
+      font-size: 0.82rem;
+    }
+    .voter-box-b {
+      background: var(--side-b-light);
+      border: 1px solid var(--side-b-border);
+      border-radius: 10px;
+      padding: 9px 11px;
+      font-size: 0.82rem;
+    }
+
+    /* All 10 Questions Result List */
+    .q-result-item {
+      background: #ffffff;
+      border: 1.5px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Student Voting Cards */
+    .choice-card {
+      border-radius: 18px;
+      padding: 22px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      word-break: keep-all;
+    }
+    .choice-card.side-a {
+      background: var(--side-a-light);
+      border: 2.5px solid var(--side-a-border);
+      color: #1e3a8a;
+    }
+    .choice-card.side-a:hover {
+      background: #dbeafe;
+      border-color: var(--side-a);
+    }
+    .choice-card.side-b {
+      background: var(--side-b-light);
+      border: 2.5px solid var(--side-b-border);
+      color: #881337;
+    }
+    .choice-card.side-b:hover {
+      background: #ffe4e6;
+      border-color: var(--side-b);
+    }
+    .choice-card.selected.side-a {
+      background: var(--side-a);
+      color: #fff;
+      border-color: #1d4ed8;
+      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+    }
+    .choice-card.selected.side-b {
+      background: var(--side-b);
+      color: #fff;
+      border-color: #be123c;
+      box-shadow: 0 8px 20px rgba(225, 29, 72, 0.3);
+    }
+
+    .choice-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.92rem;
+      font-weight: 900;
+      width: fit-content;
+      padding: 4px 12px;
+      border-radius: 999px;
+    }
+    .side-a .choice-badge { background: var(--side-a); color: #fff; }
+    .side-b .choice-badge { background: var(--side-b); color: #fff; }
+    .choice-card.selected .choice-badge { background: rgba(255,255,255,0.25); color: #fff; }
+
+    /* Question Number Pills */
+    .q-dots {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .q-dot {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: 1.5px solid #cbd5e1;
+      background: #f8fafc;
+      color: var(--text-sub);
+      font-weight: 800;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .q-dot.current {
+      border-color: var(--navy);
+      background: var(--navy);
+      color: #fff;
+    }
+    .q-dot.answered-a {
+      border-color: var(--side-a);
+      color: var(--side-a);
+      background: var(--side-a-light);
+    }
+    .q-dot.answered-b {
+      border-color: var(--side-b);
+      color: var(--side-b);
+      background: var(--side-b-light);
+    }
+
+    /* Modals */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      padding: 16px;
+    }
+    .modal-content {
+      background: #ffffff;
+      border: 2px solid var(--border);
+      border-radius: 22px;
+      max-width: 820px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 24px;
+      box-shadow: var(--shadow-md);
+      color: var(--text-main);
+    }
+
+    /* ==================== CLASSROOM DESK & CHAIR VISUALIZATION ==================== */
+    .classroom-floor {
+      background: #f8f4ec;
+      border: 3px solid #d6cbb5;
+      border-radius: 20px;
+      padding: 20px;
+      margin-top: 12px;
+    }
+    .blackboard-bar {
+      background: linear-gradient(180deg, #14532d 0%, #166534 100%);
+      border: 4px solid #8b5a2b;
+      color: #fef3c7;
+      font-weight: 900;
+      font-size: 1.05rem;
+      text-align: center;
+      padding: 10px 20px;
+      border-radius: 10px;
+      max-width: 480px;
+      margin: 0 auto 24px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+      letter-spacing: 0.05em;
+    }
+
+    .desk-groups-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+    @media (max-width: 820px) {
+      .desk-groups-grid { grid-template-columns: 1fr; }
+    }
+
+    .group-pod {
+      background: #ffffff;
+      border: 2px solid #e2d9c8;
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: 0 6px 16px rgba(30, 58, 95, 0.06);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .group-pod-header {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1.5px dashed #e2e8f0;
+    }
+    .group-pod-title {
+      font-weight: 900;
+      font-size: 1.08rem;
+      color: var(--navy);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Top / Bottom Chairs + Center Wooden Desk Table */
+    .table-arrangement {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .seats-row {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      width: 100%;
+      flex-wrap: wrap;
+    }
+
+    .student-seat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 135px;
+    }
+    /* Chair Backrest Graphic */
+    .chair-back {
+      width: 68px;
+      height: 12px;
+      border-radius: 8px 8px 0 0;
+      margin-bottom: -2px;
+    }
+    .chair-back.bottom-orient {
+      border-radius: 0 0 8px 8px;
+      margin-bottom: 0;
+      margin-top: -2px;
+    }
+    .seat-a .chair-back { background: #1d4ed8; border: 2px solid #1e3a8a; }
+    .seat-b .chair-back { background: #be123c; border: 2px solid #881337; }
+
+    /* Chair Cushion / Student Nameplate */
+    .chair-cushion {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 12px;
+      text-align: center;
+      font-weight: 800;
+      font-size: 0.9rem;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      position: relative;
+    }
+    .seat-a .chair-cushion {
+      background: #eff6ff;
+      border: 2px solid #3b82f6;
+      color: #1e3a8a;
+    }
+    .seat-b .chair-cushion {
+      background: #fff1f2;
+      border: 2px solid #f43f5e;
+      color: #881337;
+    }
+
+    .seat-side-tag {
+      font-size: 0.72rem;
+      font-weight: 900;
+      padding: 1px 7px;
+      border-radius: 999px;
+      color: #fff;
+    }
+    .seat-a .seat-side-tag { background: #2563eb; }
+    .seat-b .seat-side-tag { background: #e11d48; }
+
+    /* Wooden Group Desk Illustration */
+    .wooden-desk {
+      width: 94%;
+      height: 68px;
+      background: linear-gradient(135deg, #f3d5a5 0%, #e4b87a 100%);
+      border: 3px solid #9c6628;
+      border-radius: 12px;
+      box-shadow: inset 0 2px 6px rgba(255,255,255,0.6), 0 4px 10px rgba(139, 90, 43, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    /* Desk Grid Lines (4 Desks pushed together) */
+    .wooden-desk::before {
+      content: '';
+      position: absolute;
+      top: 0; bottom: 0; left: 50%;
+      width: 2px;
+      background: rgba(156, 102, 40, 0.35);
+    }
+    .wooden-desk::after {
+      content: '';
+      position: absolute;
+      left: 0; right: 0; top: 50%;
+      height: 2px;
+      background: rgba(156, 102, 40, 0.35);
+    }
+    .desk-label {
+      background: rgba(255, 253, 248, 0.92);
+      border: 1.5px solid #9c6628;
+      padding: 4px 14px;
+      border-radius: 999px;
+      font-weight: 900;
+      font-size: 0.85rem;
+      color: #78350f;
+      z-index: 2;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    }
+
+    /* Compact Admin List */
+    .admin-compact-item {
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      margin-bottom: 8px;
+      overflow: hidden;
+    }
+    .admin-compact-header {
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      cursor: pointer;
+    }
+    .admin-compact-header:hover { background: #f1f5f9; }
+    .admin-compact-body {
+      padding: 12px 14px;
+      border-top: 1px solid #e2e8f0;
+      background: #ffffff;
+    }
+    .admin-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <!-- Top Courtroom Header Bar -->
+  <header class="top-nav">
+    <div class="brand" onclick="App.confirmGoHome()">
+      <span>🏛️ 우리 반 대법원</span>
+      <span class="brand-badge">창체 독서 연계4</span>
+    </div>
+
+    <div class="nav-actions">
+      <a class="btn btn-xs btn-nav-top" href="선생님용_활동_안내문.html" target="_blank">📋 선생님용 안내문</a>
+      <a class="btn btn-xs btn-nav-top" href="모둠토의_활동지_및_배심원카드.html" target="_blank">🖨️ 모둠 토의 활동지 인쇄</a>
+      <button class="btn btn-xs btn-nav-top" onclick="App.requireAuth(() => App.openAdminModal())">🔒 문항 수정 (반별 설정)</button>
+      <button class="btn btn-xs btn-nav-top" onclick="App.confirmGoHome()">🏠 처음으로</button>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- ==================== 1. HOME / LANDING SCREEN ==================== -->
+    <section id="screen-home">
+      <div class="court-hero">
+        <div class="court-pillars">
+          <!-- Left Student Juror A SVG Character -->
+          <svg class="character-illust" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="60" cy="60" r="56" fill="#EFF6FF" stroke="#93C5FD" stroke-width="3"/>
+            <path d="M32 106C32 88 44 78 60 78C76 78 88 88 88 106" fill="#2563EB"/>
+            <circle cx="60" cy="48" r="22" fill="#FDE68A"/>
+            <path d="M38 44C38 28 48 22 60 22C72 22 82 28 82 44C76 38 68 36 60 36C52 36 44 38 38 44Z" fill="#1E293B"/>
+            <circle cx="52" cy="48" r="3" fill="#1E293B"/>
+            <circle cx="68" cy="48" r="3" fill="#1E293B"/>
+            <path d="M54 57C57 60 63 60 66 57" stroke="#1E293B" stroke-width="2.5" stroke-linecap="round"/>
+            <rect x="76" y="62" width="30" height="24" rx="6" fill="#2563EB" stroke="#fff" stroke-width="2"/>
+            <text x="91" y="79" text-anchor="middle" fill="#fff" font-size="15" font-weight="900">A</text>
+          </svg>
+
+          <!-- Center Supreme Court Judge SVG Character -->
+          <svg class="character-illust" style="width:108px; height:108px;" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="60" cy="60" r="56" fill="#FEF3C7" stroke="#F59E0B" stroke-width="3.5"/>
+            <path d="M28 108C28 86 42 76 60 76C78 76 92 86 92 108" fill="#1E293B"/>
+            <path d="M50 76L60 96L70 76" fill="#FFFFFF"/>
+            <path d="M56 78L60 94L64 78" fill="#B91C1C"/>
+            <circle cx="60" cy="48" r="21" fill="#FDE68A"/>
+            <path d="M36 38L60 26L84 38L60 44L36 38Z" fill="#1E293B"/>
+            <rect x="42" y="34" width="36" height="8" rx="3" fill="#334155"/>
+            <circle cx="52" cy="49" r="2.8" fill="#1E293B"/>
+            <circle cx="68" cy="49" r="2.8" fill="#1E293B"/>
+            <circle cx="52" cy="49" r="6" stroke="#92400E" stroke-width="1.8"/>
+            <circle cx="68" cy="49" r="6" stroke="#92400E" stroke-width="1.8"/>
+            <line x1="58" y1="49" x2="62" y2="49" stroke="#92400E" stroke-width="1.8"/>
+            <path d="M54 59C57 62 63 62 66 59" stroke="#1E293B" stroke-width="2.5" stroke-linecap="round"/>
+            <rect x="84" y="54" width="22" height="10" rx="3" transform="rotate(-25 84 54)" fill="#92400E"/>
+            <rect x="93" y="60" width="5" height="22" rx="2" transform="rotate(-25 93 60)" fill="#B45309"/>
+          </svg>
+
+          <!-- Right Student Juror B SVG Character -->
+          <svg class="character-illust" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="60" cy="60" r="56" fill="#FFF1F2" stroke="#FDA4AF" stroke-width="3"/>
+            <path d="M32 106C32 88 44 78 60 78C76 78 88 88 88 106" fill="#E11D48"/>
+            <circle cx="60" cy="48" r="22" fill="#FDE68A"/>
+            <path d="M36 52C36 30 46 22 60 22C74 22 84 30 84 52C78 40 70 36 60 36C50 36 42 40 36 52Z" fill="#451A03"/>
+            <circle cx="52" cy="48" r="3" fill="#1E293B"/>
+            <circle cx="68" cy="48" r="3" fill="#1E293B"/>
+            <path d="M54 57C57 60 63 60 66 57" stroke="#1E293B" stroke-width="2.5" stroke-linecap="round"/>
+            <rect x="14" y="62" width="30" height="24" rx="6" fill="#E11D48" stroke="#fff" stroke-width="2"/>
+            <text x="29" y="79" text-anchor="middle" fill="#fff" font-size="15" font-weight="900">B</text>
+          </svg>
+        </div>
+
+        <span class="hero-eyebrow">⚖️ 『사회선생님이 뽑은 우리 사회를 움직인 판결』 독서 연계활동 4</span>
+        <h1 class="hero-title">우리 반 대법원 : 판결 밸런스 게임</h1>
+        <p class="hero-desc">
+          내가 만약 배심원이라면 어떤 선택을 할까요? 10개의 딜레마 사건에 투표한 뒤,<br/>
+          우리 반에서 <strong>가장 박빙이었던 사건 TOP 3</strong>를 뽑아 교실에서 <strong>4개 모둠(2~3 : 2~3) 토의</strong>를 진행합니다!
+        </p>
+      </div>
+
+      <div class="role-grid">
+        <!-- Teacher Card (Protected by Password) -->
+        <div class="role-card teacher-card">
+          <div>
+            <div class="card-header-flex">
+              <span style="font-size:2.2rem;">👨‍⚖️📺</span>
+              <div>
+                <h2 class="role-title">교사용 화면 (교실 TV) 🔒</h2>
+                <div style="font-size:0.82rem; color:var(--gold); font-weight:800;">선생님 전용 (비밀번호 입력 후 입장)</div>
+              </div>
+            </div>
+            <p class="role-sub">
+              수업 학급을 선택하고 시작하면 학생 접속용 QR코드가 뜨며, 투표가 끝난 후 <strong>문항별 결과와 박빙 1~3위 및 4개 모둠(2~3 : 2~3) 책상 배치도</strong>를 확인합니다.
+            </p>
+
+            <label class="label">수업 학급 선택</label>
+            <div class="class-chips" id="teacherClassChips">
+              <button class="class-chip active" onclick="App.selectClassChip(101)">1학년 1반</button>
+              <button class="class-chip" onclick="App.selectClassChip(102)">1학년 2반</button>
+              <button class="class-chip" onclick="App.selectClassChip(103)">1학년 3반</button>
+              <button class="class-chip" onclick="App.selectClassChip(104)">1학년 4반</button>
+              <button class="class-chip" onclick="App.selectClassChip(105)">1학년 5반</button>
+              <button class="class-chip" onclick="App.selectClassChip(106)">1학년 6반</button>
+              <button class="class-chip" onclick="App.selectClassChip(107)">1학년 7반</button>
+              <button class="class-chip" onclick="App.selectClassChip(108)">1학년 8반</button>
+            </div>
+            <input type="hidden" id="teacherRoomInput" value="101" />
+          </div>
+
+          <button class="btn btn-navy btn-lg" style="width:100%;" onclick="App.requireAuth(() => App.startTeacherMode())">
+            🔒 교실 TV 화면 열기 (교사 전용)
+          </button>
+        </div>
+
+        <!-- Student Card (Number 1~24 Dropdown + Name Input) -->
+        <div class="role-card student-card">
+          <div>
+            <div class="card-header-flex">
+              <span style="font-size:2.2rem;">🙋‍♀️📱</span>
+              <div>
+                <h2 class="role-title">학생 배심원 화면 (디벗)</h2>
+                <div style="font-size:0.82rem; color:var(--side-a); font-weight:800;">1~10번 판결 밸런스 투표 참여</div>
+              </div>
+            </div>
+            <p class="role-sub">
+              우리 반과 출석 번호(1~24번)를 고르고 이름을 입력한 뒤, 1번부터 10번까지 나만의 판결(A 또는 B)을 선택해 주세요!
+            </p>
+
+            <label class="label">우리 반 선택</label>
+            <div class="class-chips" id="studentClassChips">
+              <button class="class-chip" onclick="App.selectClassChip(101)">1학년 1반</button>
+              <button class="class-chip" onclick="App.selectClassChip(102)">1학년 2반</button>
+              <button class="class-chip" onclick="App.selectClassChip(103)">1학년 3반</button>
+              <button class="class-chip" onclick="App.selectClassChip(104)">1학년 4반</button>
+              <button class="class-chip" onclick="App.selectClassChip(105)">1학년 5반</button>
+              <button class="class-chip" onclick="App.selectClassChip(106)">1학년 6반</button>
+              <button class="class-chip active" onclick="App.selectClassChip(107)">1학년 7반</button>
+              <button class="class-chip" onclick="App.selectClassChip(108)">1학년 8반</button>
+            </div>
+            <input type="hidden" id="studentRoomInput" value="107" />
+
+            <div style="display:grid; grid-template-columns: 120px 1fr; gap: 10px; margin-top: 8px;">
+              <div>
+                <label class="label">출석 번호</label>
+                <select id="studentNumberSelect" class="select">
+                  <!-- Populated 1~24 by JS -->
+                </select>
+              </div>
+              <div>
+                <label class="label">이름 (직접 입력)</label>
+                <input type="text" id="studentNameOnlyInput" class="input" placeholder="예: 김민준" maxlength="12" onkeydown="if(event.key==='Enter') App.startStudentMode()" />
+              </div>
+            </div>
+          </div>
+
+          <button class="btn btn-blue btn-lg" style="width:100%;" onclick="App.startStudentMode()">
+            ⚖️ 배심원 입장 & 투표 시작하기
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 2. TEACHER TV SCREEN ==================== -->
+    <section id="screen-teacher" class="hidden">
+      <!-- Top Bar showing Current Class & Simple 2 Tabs -->
+      <div class="teacher-tabs">
+        <span style="background:var(--gold-light); border:2px solid var(--gold); color:#92400e; padding:10px 18px; border-radius:999px; font-weight:900; font-size:1rem;" id="teacherCurrentClassBadge">
+          🏛️ 1학년 7반 대법원
+        </span>
+        <button class="teacher-tab active" id="tabBtnLobby" onclick="App.setTeacherTab('lobby')">
+          ① 배심원 입장 & 실시간 투표 현황
+        </button>
+        <button class="teacher-tab" id="tabBtnResults" onclick="App.setTeacherTab('results')">
+          ② 우리 반 판결 결과 & 박빙 1~3위 보기
+        </button>
+      </div>
+
+      <!-- TEACHER PAGE 1: LOBBY & VOTING PROGRESS -->
+      <div id="t-page-lobby">
+        <div class="lobby-grid">
+          <!-- Left: QR Code -->
+          <div class="panel" style="text-align:center; margin-bottom:0;">
+            <span class="hero-eyebrow" id="lobbyClassTitle">1학년 7반 대법원</span>
+            <h3 style="font-size:1.22rem; font-weight:900; color:var(--navy);">디벗으로 QR코드를 찍어주세요</h3>
+            <div class="qr-wrapper">
+              <div id="qrcodeBox"></div>
+            </div>
+            <div class="room-code-box" id="lobbyRoomCode">1학년 7반</div>
+            <div id="fileProtocolWarning" class="hidden" style="background:#fff1f2; border:1.5px solid #fda4af; color:#9f1239; padding:10px 12px; border-radius:10px; font-size:0.78rem; font-weight:700; text-align:left; margin-bottom:10px; line-height:1.45;">
+              ⚠️ <strong>현재 내 컴퓨터 파일(file://)로 열려 있어 휴대폰·디벗에서 QR 접속이 안 됩니다!</strong><br/>
+              폴더의 <code>웹사이트_업로드용.zip</code>을 웹호스팅(Netlify 등)에 올려 <code>https://</code> 주소로 열거나, 아래 [접속 주소 설정]에 배포된 주소를 입력해 주세요.
+            </div>
+            <div style="font-size:0.76rem; color:var(--text-sub); word-break:break-all; margin-bottom:10px;" id="lobbyJoinUrlDisplay"></div>
+            <button class="btn btn-xs btn-outline" onclick="App.openUrlConfigModal()">🔗 접속 주소 설정</button>
+          </div>
+
+          <!-- Right: Student Completion Status -->
+          <div class="panel" style="margin-bottom:0; display:flex; flex-direction:column; justify-content:space-between;">
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                <div>
+                  <h2 style="font-size:1.55rem; font-weight:900; color:var(--navy);">
+                    입장한 배심원: <span id="lobbyStudentCount" style="color:var(--side-a);">0</span>명
+                    <span style="font-size:1rem; color:var(--emerald); margin-left:8px;" id="lobbyDoneCount">(투표 완료 0명)</span>
+                  </h2>
+                  <p style="color:var(--text-sub); font-size:0.9rem;">
+                    학생들이 디벗에서 1~10번 문항을 모두 선택하면 번호순으로 <strong>✅ 완료</strong> 표시가 뜹니다.
+                  </p>
+                </div>
+                <div style="display:flex; gap:6px;">
+                  <button class="btn btn-xs btn-outline" onclick="App.populate21StudentsSample()">✨ 21명 예시 데이터 채우기</button>
+                  <button class="btn btn-xs btn-outline" onclick="App.resetRoomConfirm()">🗑️ 이 반 기록 초기화</button>
+                </div>
+              </div>
+
+              <div class="student-grid" id="lobbyStudentList"></div>
+            </div>
+
+            <div style="margin-top:20px; padding-top:16px; border-top:2px solid var(--border); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+              <span style="font-size:0.88rem; color:var(--text-sub);" id="teacherCustomQStatusText"></span>
+              <button class="btn btn-gold btn-xl" onclick="App.setTeacherTab('results')">
+                📊 우리 반 판결 결과 & 박빙 1~3위 보러 가기 ➔
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TEACHER PAGE 2: RESULTS & TOP 1~3 CLOSEST ISSUES -->
+      <div id="t-page-results" class="hidden">
+
+        <!-- Section A: Top 1~3 Closest Issues (박빙 1~3위) -->
+        <div class="panel" style="border-top: 6px solid var(--gold);">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <div style="display:flex; align-items:center; gap:14px;">
+              <span style="font-size:2.5rem;">⚖️</span>
+              <div>
+                <span class="hero-eyebrow" style="margin-bottom:2px;">4개 모둠(2~3 : 2~3) 토의 주제 선정 (1순위: 표 차이 최소 ➔ 2순위: 학생 🔥관심도 투표순)</span>
+                <h2 style="font-size:1.68rem; font-weight:900; color:var(--navy);">
+                  🔥 우리 반에서 가장 팽팽했던 박빙 판결 1~3위!
+                </h2>
+                <p style="color:var(--text-sub); font-size:0.92rem;">
+                  각 카드의 <strong>[🪑 이 문항으로 4개 모둠(2~3 : 2~3) 책상 배치도 보기]</strong>를 누르면 책상·의자 그림과 함께 4개 모둠 편성이 한눈에 나타납니다!
+                </p>
+              </div>
+            </div>
+            <a class="btn btn-navy btn-sm" href="모둠토의_활동지_및_배심원카드.html" target="_blank">
+              🖨️ 교실용 모둠 토의 활동지 인쇄
+            </a>
+          </div>
+
+          <div class="top3-grid" id="top3ClosestContainer"></div>
+        </div>
+
+        <!-- Section B: All 10 Questions Breakdown -->
+        <div class="panel">
+          <div style="margin-bottom:16px;">
+            <h2 style="font-size:1.5rem; font-weight:900; color:var(--navy);">📋 1번 ~ 10번 전체 문항별 판결 결과</h2>
+            <p style="color:var(--text-sub); font-size:0.92rem;">
+              우리 반 배심원들이 각 사건에 대해 어떤 선택을 했는지 함께 살펴봅시다. (어느 문항이든 원하는 문항으로 4개 모둠 배치도를 열 수 있습니다.)
+            </p>
+          </div>
+
+          <div id="allQuestionsResultList"></div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== 3. STUDENT DEVICE SCREEN (Self-Paced 1~10 Voting) ==================== -->
+    <section id="screen-student" class="hidden" style="max-width:620px; margin:0 auto;">
+      <!-- Student Top Bar -->
+      <div class="panel" style="padding:14px 18px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:1.5rem;">🧑‍⚖️</span>
+          <div>
+            <div style="font-size:0.78rem; color:var(--gold); font-weight:800;" id="stRoomBadge">1학년 7반 법정</div>
+            <div style="font-weight:900; font-size:1.05rem; color:var(--navy);" id="stNameDisplay">배심원</div>
+          </div>
+        </div>
+        <button class="btn btn-xs btn-outline" onclick="App.confirmGoHome()">나가기</button>
+      </div>
+
+      <!-- Student Voting Card -->
+      <div id="st-view-quiz" class="panel">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+          <div class="q-dots" id="studentQDots"></div>
+          <span style="font-size:0.84rem; color:var(--navy); font-weight:800;" id="stAnsweredCounter">0 / 10 완료</span>
+        </div>
+
+        <div style="background:var(--gold-light); border-left:4px solid var(--gold); padding:10px 14px; border-radius:10px; margin-bottom:14px;">
+          <div style="font-size:0.78rem; font-weight:800; color:#92400e; margin-bottom:3px;" id="stQuizNumTag">문항 1 / 10</div>
+          <p style="font-size:0.88rem; color:#451a03; font-weight:500;" id="stQuizCaseSummary"></p>
+        </div>
+
+        <h3 style="font-size:1.25rem; font-weight:900; color:var(--navy); margin-bottom:16px; line-height:1.4; word-break:keep-all;" id="stQuizTitle"></h3>
+
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          <div class="choice-card side-a" id="stBtnVoteA" onclick="App.studentCastQuizVote('A')">
+            <span class="choice-badge">🅰️ 선택 A</span>
+            <p style="font-size:1.06rem; font-weight:800;" id="stQuizOptA"></p>
+          </div>
+
+          <div class="choice-card side-b" id="stBtnVoteB" onclick="App.studentCastQuizVote('B')">
+            <span class="choice-badge">🅱️ 선택 B</span>
+            <p style="font-size:1.06rem; font-weight:800;" id="stQuizOptB"></p>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; padding-top:12px; border-top:1.5px solid var(--border);">
+          <button class="btn btn-sm btn-outline" id="stBtnPrevQ" onclick="App.studentMoveQ(-1)">◀ 이전 문항</button>
+          <span style="font-size:0.82rem; color:var(--text-sub); font-weight:600;">선택지를 터치하면 다음 문항으로 넘어갑니다</span>
+          <button class="btn btn-sm btn-outline" id="stBtnNextQ" onclick="App.studentMoveQ(1)">다음 문항 ▶</button>
+        </div>
+      </div>
+
+      <!-- Student Done Summary Card (+ Pick Hot Issue for Tie-Breaking!) -->
+      <div id="st-view-done10" class="panel hidden" style="text-align:center;">
+        <div style="font-size:2.8rem; margin-bottom:4px;">🎉</div>
+        <h2 style="font-size:1.4rem; font-weight:900; color:var(--navy); margin-bottom:6px;">10개 문항 판결 투표를 모두 마쳤습니다!</h2>
+        <p style="color:var(--text-sub); font-size:0.9rem; margin-bottom:14px;">
+          아래에서 <strong>🔥 친구들과 가장 토의해 보고 싶은 문항(핫이슈)</strong>에 불꽃 버튼을 눌러주세요!<br/>
+          (박빙 비율이 동률일 때 우리 반이 가장 원하는 주제가 1위로 선정됩니다)
+        </p>
+
+        <div id="stMySummaryList" style="text-align:left; display:flex; flex-direction:column; gap:8px; margin-bottom:18px;"></div>
+
+        <button class="btn btn-outline" onclick="App.studentReviewQuestions()">✏️ 내 선택 다시 보거나 수정하기</button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==================== MODALS ==================== -->
+
+  <!-- 0. Teacher Password Modal -->
+  <div id="modal-password" class="modal-backdrop hidden" onclick="if(event.target===this) App.closeModals()">
+    <div class="modal-content" style="max-width:420px; text-align:center;">
+      <div style="font-size:2.6rem; margin-bottom:6px;">🔒</div>
+      <h3 style="font-size:1.3rem; font-weight:900; color:var(--navy); margin-bottom:6px;">선생님 전용 화면 인증</h3>
+      <p style="font-size:0.88rem; color:var(--text-sub); margin-bottom:16px;">
+        학생들의 임의 조작을 방지하기 위해 교사용 비밀번호를 입력해 주세요.
+      </p>
+      <input type="password" id="teacherPwInput" class="input" placeholder="비밀번호 입력 (기본: 1234)" style="text-align:center; font-size:1.15rem; letter-spacing:0.15em; margin-bottom:12px;" onkeydown="if(event.key==='Enter') App.verifyPassword()" />
+      <div id="pwErrorMsg" class="hidden" style="color:var(--side-b); font-size:0.84rem; font-weight:800; margin-bottom:10px;">
+        비밀번호가 일치하지 않습니다. 다시 확인해 주세요.
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-outline" style="flex:1;" onclick="App.closeModals()">취소</button>
+        <button class="btn btn-navy" style="flex:1;" onclick="App.verifyPassword()">확인 입장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1. Per-Class Question Editor Modal -->
+  <div id="modal-admin" class="modal-backdrop hidden" onclick="if(event.target===this) App.closeModals()">
+    <div class="modal-content" style="max-width:800px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; padding-bottom:12px; border-bottom:1.5px solid var(--border); margin-bottom:12px;">
+        <div>
+          <h3 style="font-size:1.22rem; font-weight:900; color:var(--navy);">⚙️ 학급별 밸런스 게임 문항 관리</h3>
+          <p style="font-size:0.82rem; color:var(--text-sub);">
+            특정 반을 선택해 수정하면 다른 반에는 영향을 주지 않고 <strong>해당 반에만</strong> 수정된 문항이 적용됩니다.
+          </p>
+        </div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <button class="btn btn-xs btn-emerald" onclick="App.saveAdminQuestions()">💾 저장·적용</button>
+          <button class="btn btn-xs btn-blue" onclick="App.downloadUpdatedHtmlFile()">📄 파일로 백업</button>
+          <button class="btn btn-xs btn-outline" onclick="App.resetTargetQuestions()">🔄 공통 기본값으로 복원</button>
+          <button class="btn btn-xs btn-outline" onclick="App.closeModals()">닫기 ✕</button>
+        </div>
+      </div>
+
+      <!-- Class Target Selector Bar & Password Change inside Admin Modal -->
+      <div style="background:var(--gold-light); border:1.5px solid var(--gold); border-radius:12px; padding:10px 14px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <span style="font-weight:900; color:#92400e; font-size:0.9rem;">📌 수정 대상 학급:</span>
+          <select id="adminTargetClassSelect" class="select" style="width:205px; padding:6px 10px; font-weight:800; color:var(--navy);" onchange="App.changeAdminTargetClass(this.value)">
+            <option value="common">🌐 전체 학급 공통 기본 문항</option>
+            <option value="101">🏫 1학년 1반 전용 문항</option>
+            <option value="102">🏫 1학년 2반 전용 문항</option>
+            <option value="103">🏫 1학년 3반 전용 문항</option>
+            <option value="104">🏫 1학년 4반 전용 문항</option>
+            <option value="105">🏫 1학년 5반 전용 문항</option>
+            <option value="106">🏫 1학년 6반 전용 문항</option>
+            <option value="107">🏫 1학년 7반 전용 문항</option>
+            <option value="108">🏫 1학년 8반 전용 문항</option>
+          </select>
+          <span id="adminClassStatusPill" style="font-size:0.76rem; font-weight:800; padding:3px 9px; border-radius:999px; background:#fff; color:var(--navy); border:1px solid var(--gold);"></span>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="font-size:0.82rem; font-weight:800; color:#92400e;">🔑 교사 비밀번호:</span>
+          <input type="text" id="adminPwChangeInput" class="input" value="1234" style="width:90px; padding:5px 8px; font-size:0.85rem; text-align:center;" />
+          <button class="btn btn-xs btn-navy" onclick="App.changeTeacherPassword()">변경</button>
+        </div>
+      </div>
+
+      <div id="adminQuestionList" style="max-height:54vh; overflow-y:auto; padding-right:4px;"></div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding-top:12px; border-top:1.5px solid var(--border);">
+        <button class="btn btn-sm btn-outline" onclick="App.addAdminQuestion()">➕ 새 문항 추가</button>
+        <button class="btn btn-sm btn-emerald" onclick="App.saveAdminQuestions()">💾 이 학급에 저장 및 적용</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Classroom Desk & Chair 4-Group (2~3 : 2~3) Team Matching Modal -->
+  <div id="modal-teams" class="modal-backdrop hidden" onclick="if(event.target===this) App.closeModals()">
+    <div class="modal-content" style="max-width:1100px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:8px;">
+        <div>
+          <span class="hero-eyebrow" style="margin-bottom:2px;" id="teamModalClassBadge">1학년 7반 (21명)</span>
+          <h3 style="font-size:1.38rem; font-weight:900; color:var(--navy);" id="teamModalTitle">
+            🪑 4개 모둠(2~3 : 2~3) 책상·의자 배치도
+          </h3>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-sm btn-outline" onclick="App.shuffleAndRenderTeams()">🔀 같은 진영 내에서 자리 다시 섞기</button>
+          <a class="btn btn-sm btn-navy" href="모둠토의_활동지_및_배심원카드.html" target="_blank">🖨️ 모둠 활동지 인쇄</a>
+          <button class="btn btn-sm btn-outline" onclick="App.closeModals()">닫기 ✕</button>
+        </div>
+      </div>
+
+      <div style="background:#eff6ff; border:1.5px solid #93c5fd; border-radius:12px; padding:10px 14px; font-size:0.9rem; color:#1e3a8a; font-weight:700; margin-bottom:10px;" id="teamModalSubDesc"></div>
+
+      <!-- Classroom Floor Plan with Blackboard, Wooden Desks, and Blue/Red Chairs -->
+      <div class="classroom-floor">
+        <div class="blackboard-bar">🏫 칠판 · 교탁 (앞쪽) — 모둠 책상 번호를 보고 자리에 모여 앉으세요!</div>
+        <div class="desk-groups-grid" id="teamMatchResultGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. URL Config Modal -->
+  <div id="modal-url" class="modal-backdrop hidden" onclick="if(event.target===this) App.closeModals()">
+    <div class="modal-content" style="max-width:520px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h3 style="font-size:1.2rem; font-weight:900; color:var(--navy);">🔗 학생 디벗 접속 주소(QR) 설정</h3>
+        <button class="btn btn-xs btn-outline" onclick="App.closeModals()">닫기 ✕</button>
+      </div>
+      <label class="label">학생 접속용 웹 주소(URL)</label>
+      <div style="display:flex; gap:8px; margin-bottom:12px;">
+        <input type="text" id="customJoinUrlInput" class="input" placeholder="https://..." />
+        <button class="btn btn-gold" style="white-space:nowrap;" onclick="App.saveCustomJoinUrl()">적용</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ============================================================================
+       1. COMMON DEFAULT 10 QUESTIONS (5 Units x 2 Questions)
+       ============================================================================ */
+    const DEFAULT_QUESTIONS = [
+      {
+        id: 'q1',
+        enabled: true,
+        unit: '1단원 나를 둘러싼 터전의 새로운 모색',
+        cases: '1번(호주제 판례) · 4번(여성 조기 정년 판례)',
+        summary: '과거에는 오랜 전통·관습이라는 이유로 남성만 가족 대표(호주)가 되거나, 여성 교환원은 25세가 되면 퇴사해야 하는 규칙이 있었으나 재판을 통해 폐지되었습니다.',
+        question: '오랫동안 이어져 온 사회의 전통·관습과 ‘평등’이라는 가치가 부딪힐 때, 법은 어떻게 해야 할까?',
+        optionA: '사회 혼란을 막기 위해 사람들의 인식이 자연스럽게 바뀔 때까지 기다려야 한다',
+        optionB: '부당한 차별이라면 사람들이 낯설어하더라도 법이 먼저 강제로 즉시 바꿔야 한다',
+        rulingTip: '법원은 아무리 오래된 전통이나 관습이라도 헌법의 평등과 인간 존엄에 어긋난다면 즉시 고쳐야 한다고 판결했습니다.'
+      },
+      {
+        id: 'q2',
+        enabled: true,
+        unit: '1단원 나를 둘러싼 터전의 새로운 모색',
+        cases: '6번(술 접대 업무상 재해 판례)',
+        summary: '회사 거래처 사람을 접대하느라 상사와 함께 술을 많이 마시고 귀가하던 중 사고를 당한 직원이 ‘일하다 다친 것(업무상 재해)’으로 인정해 달라고 소송을 냈습니다.',
+        question: '회사 분위기를 위해 어쩔 수 없이 참석한 회식·접대 자리에서 과음하다 다쳤다면?',
+        optionA: '회사 업무의 연장선이므로 회사와 국가가 치료비를 보상해야 한다',
+        optionB: '술을 얼마나 마실지는 결국 본인의 선택이므로 개인이 책임져야 한다',
+        rulingTip: '초기에는 개인 책임으로 보았으나, 점차 공식 회식이나 업무상 피할 수 없는 자리에서의 사고는 업무상 재해로 인정하는 방향으로 변화했습니다.'
+      },
+      {
+        id: 'q3',
+        enabled: true,
+        unit: '2단원 잃어버린, 잊어버린 권리 찾기',
+        cases: '10번(음주 측정 판례) · 11번(치과 의사 모녀 피살 사건)',
+        summary: '강제로 뽑은 혈액 증거(10번)와 정황상 강한 의심은 가지만 100% 확실하지 않은 증거(11번)를 두고, 법원은 적법한 절차와 ‘의심스러울 땐 피고인의 이익으로’ 원칙을 강조했습니다.',
+        question: '99% 범인이 확실해 보이는 용의자가 있다. 하지만 결정적 증거 하나를 경찰이 규칙(절차)을 어기고 몰래 가져왔다면?',
+        optionA: '억울한 피해자를 위해, 규칙을 조금 어긴 증거라도 인정해서 범인을 처벌해야 한다',
+        optionB: '불법 수사와 억울한 누명을 막기 위해, 그 증거는 무효로 하고 용의자를 풀어주어야 한다',
+        rulingTip: '법원은 “열 명의 범인을 놓치더라도 한 명의 억울한 사람을 만들지 말아야 한다”며 위법하게 수집한 증거는 무효라고 판결했습니다.'
+      },
+      {
+        id: 'q4',
+        enabled: true,
+        unit: '2단원 잃어버린, 잊어버린 권리 찾기',
+        cases: '13번(유치장 내 화장실 관리 판례)',
+        summary: '경찰서 유치장에서 자해나 도주를 막는다는 이유로 화장실 가림막을 낮게 만들어 안이 다 보이게 했던 관리 방식에 대해 인권 침해 소송이 제기되었습니다.',
+        question: '죄를 짓고 체포된 사람을 가두는 시설(유치장)에서 ‘안전 감시’와 ‘인권(사생활)’이 부딪힌다면?',
+        optionA: '도주나 자해 같은 위험한 사고를 막기 위해 화장실이라도 감시할 수 있어야 한다',
+        optionB: '아무리 죄를 지은 사람이라도 화장실 가림막 같은 최소한의 인권과 사생활은 무조건 지켜야 한다',
+        rulingTip: '헌법재판소는 아무리 수용자라 하더라도 인간으로서의 최소한의 수치심과 존엄성을 침해하는 개방형 화장실은 위헌이라고 판결했습니다.'
+      },
+      {
+        id: 'q5',
+        enabled: true,
+        unit: '3단원 작은 사람들의 작지 않은 외침',
+        cases: '18번(성폭행 보복 살해 사건)',
+        summary: '어린 시절 큰 피해를 입고 평생 고통받던 피해자가, 법이 가해자를 제대로 처벌하지 못하자 성인이 된 뒤 직접 가해자를 찾아가 보복한 사건입니다.',
+        question: '법이 가해자를 제대로 처벌하지 못해 평생 고통받던 피해자가 직접 가해자에게 복수(사적 제재)를 했다면?',
+        optionA: '개인의 직접 복수를 허용하면 사회 질서가 무너지므로 법대로 엄격히 처벌해야 한다',
+        optionB: '국가와 법이 피해자를 지켜주지 못한 책임이 크므로 처벌을 대폭 줄여주거나 용서해야 한다',
+        rulingTip: '법원은 사적 복수 자체는 유죄로 인정하면서도, 피해자가 겪은 고통과 정황을 참작해 형량을 감경하고 성폭력 특별법 제정의 계기가 되었습니다.'
+      },
+      {
+        id: 'q6',
+        enabled: true,
+        unit: '3단원 작은 사람들의 작지 않은 외침',
+        cases: '19번(직장 내 성희롱) · 20번(여성 장애인 성폭력) · 22번(성전환자 호적 정정)',
+        summary: '“그냥 친근감의 표현이나 장난이었다”는 가해자의 변명 대신, 피해자와 사회적 약자가 느낀 고통과 인권을 기준으로 책임을 인정한 판결들입니다.',
+        question: '누군가 던진 말이나 행동에 대해 ‘한 사람의 의도’와 ‘당한 사람의 기분’이 다를 때, 잘못을 판단하는 기준은?',
+        optionA: '나쁜 의도가 없었고 주변 사람들이 평범한 장난이라고 생각한다면 처벌할 수 없다',
+        optionB: '나쁜 의도가 없었더라도 당하는 사람이 모욕감이나 불쾌감을 느꼈다면 책임을 물어야 한다',
+        rulingTip: '법원은 행위자의 의도가 아니라 ‘피해자의 관점’에서 불쾌감과 인권 침해 여부를 판단해야 한다고 판결했습니다.'
+      },
+      {
+        id: 'q7',
+        enabled: true,
+        unit: '4단원 우리를 둘러싼 환경의 재발견',
+        cases: '25번(김 양식장 오염 사건) · 26번(박길래 진폐증 판례)',
+        summary: '공장 폐수로 양식장이 망하고(25번), 연탄공장 주변 주민이 진폐증에 걸렸을 때(26번), 공장 측은 “우리가 원인이라는 걸 피해자가 100% 과학적으로 증명하라”고 주장했습니다.',
+        question: '수많은 주민의 일자리를 책임지는 큰 공장 근처에서 주민들이 아프기 시작했다. 공장이 원인인지 아직 100% 과학적으로 밝혀지지 않았다면?',
+        optionA: '확실한 과학적 증거가 나올 때까지는 수많은 직원의 생계가 걸린 공장을 멈추게 할 수 없다',
+        optionB: '공장이 ‘우리 때문이 아니다’라고 증명하지 못하면, 즉시 가동을 멈추고 주민에게 먼저 배상해야 한다',
+        rulingTip: '대법원은 환경오염 소송에서 힘없는 피해자가 복잡한 과학적 원인을 100% 증명하지 못하더라도, 상당한 관련성이 있으면 기업이 배상해야 한다고 판결했습니다.'
+      },
+      {
+        id: 'q8',
+        enabled: true,
+        unit: '4단원 우리를 둘러싼 환경의 재발견',
+        cases: '29번(고엽제 피해 판례)',
+        summary: '전쟁터에서 명령에 따라 고엽제(제초제)를 뿌렸다가 수십 년 뒤 심각한 후유증을 앓게 된 군인들이 뒤늦게 제조 회사와 국가의 책임을 물은 사건입니다.',
+        question: '과거에는 위험한 줄 모르고 국가나 회사가 시키는 대로 사용했던 물질이, 수십 년 뒤 건강에 치명적인 것으로 밝혀졌다면?',
+        optionA: '당시의 과학 기술로는 위험성을 정확히 알 수 없었으므로 과거의 일에 책임을 물을 수 없다',
+        optionB: '당시에는 몰랐더라도 결과적으로 큰 피해를 입혔다면 끝까지 치료와 배상을 책임져야 한다',
+        rulingTip: '법원은 유해 화학물질 제조사와 국가가 위험성을 미리 점검하고 피해자들의 후유증을 배상·지원할 책임이 있다고 인정했습니다.'
+      },
+      {
+        id: 'q9',
+        enabled: true,
+        unit: '5단원 사건들, 그리고 끝나지 않은 논쟁',
+        cases: '32번(박종철 고문 치사 사건) · 36번(임신 중절 수술 사유 판례)',
+        summary: '국가 권력이 “조직과 법을 위한 일”이라며 개인의 생명과 기본권을 침해하거나 부당한 명령을 내렸을 때, 개인의 양심과 인권이 어디까지 보호받아야 하는지 묻는 사건입니다.',
+        question: '윗사람(상관)이 “우리 조직을 위한 일이다”라며 법에 어긋나는 부당한 지시를 내렸고, 부하 직원이 어쩔 수 없이 따랐다면?',
+        optionA: '명령을 거부하기 힘든 아랫사람의 입장을 고려해 지시를 내린 윗사람만 무겁게 처벌해야 한다',
+        optionB: '아무리 윗사람의 명령이라도 잘못된 행동에 동참했다면 직접 실행한 사람도 똑같이 무겁게 처벌해야 한다',
+        rulingTip: '법원은 인간의 생명과 존엄을 해치는 명백히 불법적인 명령은 복종할 의무가 없으며, 실행에 가담한 사람과 상관 모두에게 무거운 책임을 물었습니다.'
+      },
+      {
+        id: 'q10',
+        enabled: true,
+        unit: '5단원 사건들, 그리고 끝나지 않은 논쟁',
+        cases: '34번(친일파 후손 땅 찾기 소송)',
+        summary: '일제강점기에 친일 행위로 모은 땅을 수십 년이 지난 뒤 후손들이 “우리 조상 땅이니 돌려달라”며 국가를 상대로 소송을 낸 사건입니다.',
+        question: '아주 먼 옛날 조상이 부당한 방법(친일 등)으로 모은 재산을 오늘날 아무 죄 없는 후손이 물려받았다면?',
+        optionA: '후손 본인이 지은 죄가 아니더라도, 부당하게 모은 재산은 기간에 상관없이 국가가 모두 환수해야 한다',
+        optionB: '이미 오랜 세월이 흘렀고 후손 개인의 잘못은 아니므로, 지금 와서 재산을 빼앗는 것은 부당하다',
+        rulingTip: '헌법재판소는 민족과 국가를 배신해 얻은 친일 재산은 후손에게 대물림될 수 없으며 국가로 귀속시키는 것이 정의에 부합한다고 합헌 판결했습니다.'
+      }
+    ];
+
+    /* ============================================================================
+       2. PRE-LOADED 21-STUDENT SAMPLE DATA FOR CLASS 1-7 (Room 107)
+       ============================================================================ */
+    function buildClass107SampleState() {
+      const students21 = [
+        { num: 1, name: '1번 강하늘' },
+        { num: 2, name: '2번 고은별' },
+        { num: 3, name: '3번 김도윤' },
+        { num: 4, name: '4번 김서연' },
+        { num: 5, name: '5번 나윤재' },
+        { num: 6, name: '6번 노지아' },
+        { num: 7, name: '7번 박민준' },
+        { num: 8, name: '8번 박지우' },
+        { num: 9, name: '9번 배수호' },
+        { num: 10, name: '10번 백하린' },
+        { num: 11, name: '11번 서예준' },
+        { num: 12, name: '12번 송하은' },
+        { num: 13, name: '13번 신유찬' },
+        { num: 14, name: '14번 안소율' },
+        { num: 15, name: '15번 윤서준' },
+        { num: 16, name: '16번 이수아' },
+        { num: 17, name: '17번 임지호' },
+        { num: 18, name: '18번 장하윤' },
+        { num: 19, name: '19번 정우진' },
+        { num: 20, name: '20번 최유나' },
+        { num: 21, name: '21번 한승우' }
+      ];
+
+      const stMap = {};
+      students21.forEach(s => {
+        stMap[`st107_${s.num}`] = { id: `st107_${s.num}`, num: s.num, name: s.name, joinedAt: Date.now() };
+      });
+
+      // Exact A counts out of 21 students for Q1~Q10:
+      // Q3: A 10 : B 11 (1표 차이! + 핫이슈 9표 -> 박빙 1위)
+      // Q5: A 11 : B 10 (1표 차이! + 핫이슈 6표 -> 박빙 2위)
+      // Q2: A 9  : B 12 (3표 차이! + 핫이슈 5표 -> 박빙 3위)
+      const countAPerQ = {
+        q1: 5,   // A 5 : B 16
+        q2: 9,   // A 9 : B 12 (박빙 3위)
+        q3: 10,  // A 10 : B 11 (박빙 1위 - A 10명, B 11명!)
+        q4: 6,   // A 6 : B 15
+        q5: 11,  // A 11 : B 10 (박빙 2위)
+        q6: 7,   // A 7 : B 14
+        q7: 8,   // A 8 : B 13
+        q8: 4,   // A 4 : B 17
+        q9: 14,  // A 14 : B 7
+        q10: 15  // A 15 : B 6
+      };
+
+      const votes1 = {};
+      Object.entries(countAPerQ).forEach(([qId, aCount], qIdx) => {
+        votes1[qId] = {};
+        students21.forEach((s, sIdx) => {
+          // Rotate which students pick A across questions so it looks realistic
+          const shiftedIdx = (sIdx + qIdx * 2) % 21;
+          votes1[qId][`st107_${s.num}`] = (shiftedIdx < aCount) ? 'A' : 'B';
+        });
+      });
+
+      // Hot Issue picks (for tie-breaking when two questions both have 10:11 split)
+      const hotPicks = {
+        q3: ['st107_1', 'st107_3', 'st107_5', 'st107_7', 'st107_9', 'st107_11', 'st107_13', 'st107_15', 'st107_17'],
+        q5: ['st107_2', 'st107_4', 'st107_6', 'st107_8', 'st107_10', 'st107_12'],
+        q2: ['st107_14', 'st107_16', 'st107_18', 'st107_19', 'st107_20'],
+        q7: ['st107_21']
+      };
+
+      return { students: stMap, votes1, hotPicks };
+    }
+
+    /* ============================================================================
+       3. REAL-TIME SYNC ENGINE (MQTT over WSS + Local BroadcastChannel)
+       ============================================================================ */
+    const Net = {
+      mqttClient: null,
+      bc: null,
+      connected: false,
+      roomCode: '107',
+      topicPrefix: 'agy-court-balance-2026-v3',
+
+      init() {
+        if ('BroadcastChannel' in window) {
+          this.bc = new BroadcastChannel('agy_court_balance_channel_v3');
+          this.bc.onmessage = (ev) => {
+            if (ev.data) App.handleIncomingMessage(ev.data.type, ev.data.payload, ev.data.room);
+          };
+        }
+        window.addEventListener('storage', (ev) => {
+          if (ev.key === 'agy_court_bus_event_v3' && ev.newValue) {
+            try {
+              const msg = JSON.parse(ev.newValue);
+              App.handleIncomingMessage(msg.type, msg.payload, msg.room);
+            } catch (e) {}
+          }
+        });
+
+        this.connectMqtt('wss://broker.emqx.io:8084/mqtt', 'wss://broker.hivemq.com:8884/mqtt');
+      },
+
+      connectMqtt(primaryUrl, backupUrl) {
+        if (typeof mqtt === 'undefined') return;
+        try {
+          const clientId = 'agy_court_' + Math.random().toString(36).substring(2, 10);
+          this.mqttClient = mqtt.connect(primaryUrl, {
+            clientId,
+            clean: true,
+            connectTimeout: 5000,
+            reconnectPeriod: 3000
+          });
+
+          this.mqttClient.on('connect', () => {
+            this.connected = true;
+            this.subscribeRoom(this.roomCode);
+          });
+
+          this.mqttClient.on('error', () => {
+            if (!this.connected && backupUrl) {
+              this.mqttClient.end(true);
+              this.connectMqtt(backupUrl, null);
+            }
+          });
+
+          this.mqttClient.on('message', (topic, message) => {
+            try {
+              const data = JSON.parse(message.toString());
+              App.handleIncomingMessage(data.type, data.payload, data.room);
+            } catch (e) {}
+          });
+        } catch (err) {}
+      },
+
+      subscribeRoom(roomCode) {
+        this.roomCode = String(roomCode).trim() || '107';
+        if (this.mqttClient && this.connected) {
+          this.mqttClient.subscribe(`${this.topicPrefix}/room/${this.roomCode}/#`, { qos: 0 });
+          this.mqttClient.subscribe(`${this.topicPrefix}/global/questions`, { qos: 0 });
+        }
+      },
+
+      publish(type, payload, retain = false, subtopic = 'events') {
+        const packet = {
+          type,
+          payload,
+          room: this.roomCode,
+          ts: Date.now()
+        };
+
+        if (this.bc) this.bc.postMessage(packet);
+        try {
+          localStorage.setItem('agy_court_bus_event_v3', JSON.stringify(packet));
+        } catch (e) {}
+
+        if (this.mqttClient && this.connected) {
+          const topic = subtopic === 'global_questions'
+            ? `${this.topicPrefix}/global/questions`
+            : `${this.topicPrefix}/room/${this.roomCode}/${subtopic}`;
+          this.mqttClient.publish(topic, JSON.stringify(packet), { qos: 0, retain });
+        }
+      }
+    };
+
+    /* ============================================================================
+       4. MAIN APPLICATION CONTROLLER
+       ============================================================================ */
+    const App = {
+      role: 'home', // 'home' | 'teacher' | 'student'
+      teacherTab: 'lobby', // 'lobby' | 'results'
+      roomCode: '107', // Default to 1-7 so teacher can immediately see 21-student example!
+      customJoinUrl: '',
+      teacherPassword: '1234',
+      isTeacherAuthed: false,
+      pendingAuthCallback: null,
+
+      // Per-Class Question Storage:
+      // commonQuestions = shared default for all classes
+      // classQuestionsMap = { '101': [...], '107': [...] } for classes that customized their questions
+      commonQuestions: [],
+      classQuestionsMap: {},
+      adminTargetClass: 'common', // 'common' or '101'~'108'
+      expandedAdminIdx: -1,
+
+      // Current active modal team matching state
+      activeTeamQId: '',
+      activeTeamQNum: 1,
+      teamShuffleSeed: 0,
+
+      // Student State
+      studentId: '',
+      studentNum: 1,
+      studentName: '',
+      studentQIndex: 0,
+      studentDoneView: false,
+
+      // Room Data
+      state: {
+        students: {}, // { studentId: { id, num, name, joinedAt } }
+        votes1: {},   // { qId: { studentId: 'A' | 'B' } }
+        hotPicks: {}  // { qId: [ studentId ] }
+      },
+
+      init() {
+        // Populate Student Number Select (1 ~ 24)
+        const numSel = document.getElementById('studentNumberSelect');
+        if (numSel) {
+          numSel.innerHTML = Array.from({ length: 24 }, (_, i) =>
+            `<option value="${i + 1}">${i + 1}번</option>`
+          ).join('');
+        }
+
+        // Load Common Questions & Per-Class Questions
+        const savedCommon = localStorage.getItem('agy_court_common_questions_v3');
+        if (savedCommon) {
+          try { this.commonQuestions = JSON.parse(savedCommon); } catch (e) { this.commonQuestions = JSON.parse(JSON.stringify(DEFAULT_QUESTIONS)); }
+        } else {
+          this.commonQuestions = JSON.parse(JSON.stringify(DEFAULT_QUESTIONS));
+        }
+
+        const savedClassMap = localStorage.getItem('agy_court_class_questions_map_v3');
+        if (savedClassMap) {
+          try { this.classQuestionsMap = JSON.parse(savedClassMap); } catch (e) { this.classQuestionsMap = {}; }
+        }
+
+        // Pre-seed 1학년 7반 (Room 107) with 21-student realistic sample if not yet initialized
+        if (!localStorage.getItem('agy_court_room_v3_107')) {
+          const sample107 = buildClass107SampleState();
+          localStorage.setItem('agy_court_room_v3_107', JSON.stringify(sample107));
+        }
+        // Also custom-tweak Q3 in 1학년 7반 slightly or keep all 10 questions ready for 1-7
+
+        // Restore Custom Teacher Password if saved
+        const savedPw = localStorage.getItem('agy_court_teacher_pw_v3');
+        if (savedPw) this.teacherPassword = savedPw;
+
+        // Restore Auth Session
+        if (sessionStorage.getItem('agy_court_teacher_authed') === 'true') {
+          this.isTeacherAuthed = true;
+        }
+
+        // Restore Student Info
+        const savedNum = localStorage.getItem('agy_court_student_num');
+        const savedNameOnly = localStorage.getItem('agy_court_student_name_only');
+        if (savedNum && numSel) numSel.value = savedNum;
+        if (savedNameOnly) document.getElementById('studentNameOnlyInput').value = savedNameOnly;
+
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('room')) {
+          const r = params.get('room').trim();
+          this.selectClassChip(r);
+        } else {
+          this.selectClassChip(107);
+        }
+
+        Net.init();
+
+        if (params.get('mode') === 'student') {
+          document.querySelector('.student-card').scrollIntoView({ behavior: 'smooth' });
+          document.getElementById('studentNameOnlyInput').focus();
+        }
+
+        const shot = params.get('shot');
+        if (shot === 'lobby') {
+          this.selectClassChip(107);
+          this.isTeacherAuthed = true;
+          this.startTeacherMode();
+          this.setTeacherTab('lobby');
+        } else if (shot === 'results') {
+          this.selectClassChip(107);
+          this.isTeacherAuthed = true;
+          this.startTeacherMode();
+          this.setTeacherTab('results');
+        } else if (shot === 'desks') {
+          this.selectClassChip(107);
+          this.isTeacherAuthed = true;
+          this.startTeacherMode();
+          this.setTeacherTab('results');
+          this.openTeamMatchModal('q3', 3);
+        } else if (shot === 'admin') {
+          this.selectClassChip(107);
+          this.isTeacherAuthed = true;
+          this.startTeacherMode();
+          this.openAdminModal();
+          this.toggleAdminExpand(0);
+        }
+      },
+
+      /* -------------------- Teacher Password Protection -------------------- */
+      requireAuth(callback) {
+        if (this.isTeacherAuthed) {
+          callback();
+          return;
+        }
+        this.pendingAuthCallback = callback;
+        document.getElementById('teacherPwInput').value = '';
+        document.getElementById('pwErrorMsg').classList.add('hidden');
+        document.getElementById('modal-password').classList.remove('hidden');
+        setTimeout(() => document.getElementById('teacherPwInput').focus(), 80);
+      },
+
+      verifyPassword() {
+        const val = document.getElementById('teacherPwInput').value.trim();
+        if (val === this.teacherPassword) {
+          this.isTeacherAuthed = true;
+          sessionStorage.setItem('agy_court_teacher_authed', 'true');
+          this.closeModals();
+          if (this.pendingAuthCallback) {
+            const cb = this.pendingAuthCallback;
+            this.pendingAuthCallback = null;
+            cb();
+          }
+        } else {
+          document.getElementById('pwErrorMsg').classList.remove('hidden');
+          document.getElementById('teacherPwInput').select();
+        }
+      },
+
+      /* -------------------- Per-Class Questions Lookup -------------------- */
+      getQuestionsForClass(roomCode) {
+        const r = String(roomCode || this.roomCode);
+        if (this.classQuestionsMap[r] && Array.isArray(this.classQuestionsMap[r])) {
+          return this.classQuestionsMap[r];
+        }
+        return this.commonQuestions;
+      },
+
+      getActiveQuestions(roomCode) {
+        const list = this.getQuestionsForClass(roomCode);
+        const active = list.filter(q => q.enabled !== false);
+        return active.length > 0 ? active : list;
+      },
+
+      /* -------------------- Navigation & Class Selection -------------------- */
+      showScreen(name) {
+        this.role = name;
+        ['home', 'teacher', 'student'].forEach(s => {
+          document.getElementById(`screen-${s}`).classList.toggle('hidden', s !== name);
+        });
+      },
+
+      confirmGoHome() {
+        if (this.role === 'home') return;
+        this.showScreen('home');
+      },
+
+      selectClassChip(code) {
+        this.roomCode = String(code);
+        document.getElementById('teacherRoomInput').value = this.roomCode;
+        document.getElementById('studentRoomInput').value = this.roomCode;
+        const targetDigit = String(code).slice(-1) + '반';
+        document.querySelectorAll('#teacherClassChips .class-chip, #studentClassChips .class-chip').forEach(btn => {
+          btn.classList.toggle('active', btn.textContent.includes(targetDigit));
+        });
+      },
+
+      formatClassName(code) {
+        const c = String(code);
+        if (/^10[1-8]$/.test(c)) return `1학년 ${c[2]}반`;
+        return `${c}반`;
+      },
+
+      loadRoomFromStorage(r) {
+        const saved = localStorage.getItem(`agy_court_room_v3_${r}`);
+        if (saved) {
+          try {
+            this.state = JSON.parse(saved);
+            if (!this.state.students) this.state.students = {};
+            if (!this.state.votes1) this.state.votes1 = {};
+            if (!this.state.hotPicks) this.state.hotPicks = {};
+          } catch (e) {
+            this.state = { students: {}, votes1: {}, hotPicks: {} };
+          }
+        } else {
+          this.state = { students: {}, votes1: {}, hotPicks: {} };
+        }
+      },
+
+      saveRoomToStorage() {
+        try {
+          localStorage.setItem(`agy_court_room_v3_${this.roomCode}`, JSON.stringify(this.state));
+        } catch (e) {}
+      },
+
+      /* -------------------- Teacher Mode -------------------- */
+      startTeacherMode() {
+        const r = document.getElementById('teacherRoomInput').value.trim() || '101';
+        this.roomCode = r;
+        Net.subscribeRoom(r);
+        this.loadRoomFromStorage(r);
+
+        // Always open to Lobby (QR Code & Live Voting Status) first so students can scan the QR code!
+        this.teacherTab = 'lobby';
+        this.showScreen('teacher');
+        this.renderTeacherLobbyInfo();
+        this.setTeacherTab(this.teacherTab);
+      },
+
+      setTeacherTab(tab) {
+        this.teacherTab = tab;
+        document.getElementById('tabBtnLobby').classList.toggle('active', tab === 'lobby');
+        document.getElementById('tabBtnResults').classList.toggle('active', tab === 'results');
+        document.getElementById('t-page-lobby').classList.toggle('hidden', tab !== 'lobby');
+        document.getElementById('t-page-results').classList.toggle('hidden', tab !== 'results');
+        this.renderTeacherView();
+      },
+
+      renderTeacherLobbyInfo() {
+        const cname = this.formatClassName(this.roomCode);
+        document.getElementById('teacherCurrentClassBadge').textContent = `🏛️ ${cname} 대법원`;
+        document.getElementById('lobbyClassTitle').textContent = `${cname} 대법원`;
+        document.getElementById('lobbyRoomCode').textContent = cname;
+
+        const defaultWebUrl = 'https://byunhiyuan-commits.github.io/court-game/';
+        const currentHref = window.location.href.split('?')[0];
+        const autoUrl = currentHref.startsWith('file:') ? defaultWebUrl : currentHref;
+        let baseUrl = this.customJoinUrl || localStorage.getItem('agy_court_custom_url') || autoUrl;
+        const joinUrl = `${baseUrl}?room=${encodeURIComponent(this.roomCode)}&mode=student`;
+        document.getElementById('lobbyJoinUrlDisplay').textContent = joinUrl;
+
+        const warnEl = document.getElementById('fileProtocolWarning');
+        if (warnEl) {
+          warnEl.classList.toggle('hidden', !joinUrl.startsWith('file:'));
+        }
+
+        const qrBox = document.getElementById('qrcodeBox');
+        qrBox.innerHTML = '';
+        if (typeof QRCode !== 'undefined') {
+          new QRCode(qrBox, {
+            text: joinUrl,
+            width: 165,
+            height: 165,
+            colorDark: '#1e3a5f',
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.M
+          });
+        }
+      },
+
+      resetRoomConfirm() {
+        if (!confirm(`${this.formatClassName(this.roomCode)}의 참여 학생 및 투표 기록을 모두 초기화할까요?`)) return;
+        this.state = { students: {}, votes1: {}, hotPicks: {} };
+        this.saveRoomToStorage();
+        Net.publish('room_state', { state: this.state }, true, 'state');
+        this.renderTeacherView();
+      },
+
+      populate21StudentsSample() {
+        this.state = buildClass107SampleState();
+        this.saveRoomToStorage();
+        Net.publish('room_state', { state: this.state }, true, 'state');
+        this.renderTeacherView();
+      },
+
+      getQuestionStats(qId) {
+        const votes = this.state.votes1[qId] || {};
+        const votersA = [];
+        const votersB = [];
+
+        // Sort students by attendance number first
+        const entries = Object.entries(votes).map(([sid, choice]) => {
+          const st = this.state.students[sid] || { name: sid, num: 99 };
+          return { sid, choice, name: st.name, num: st.num || parseInt(st.name, 10) || 99 };
+        }).sort((x, y) => x.num - y.num);
+
+        entries.forEach(item => {
+          if (item.choice === 'A') votersA.push(item.name);
+          else if (item.choice === 'B') votersB.push(item.name);
+        });
+
+        const a = votersA.length;
+        const b = votersB.length;
+        const total = a + b;
+        const pctA = total > 0 ? Math.round((a / total) * 100) : 50;
+        const pctB = total > 0 ? (100 - pctA) : 50;
+        const diff = Math.abs(a - b);
+        const closeness = total > 0 ? Math.max(0, Math.round(100 - Math.abs((a / total) * 100 - 50) * 2)) : 0;
+        const hotCount = (this.state.hotPicks && this.state.hotPicks[qId]) ? this.state.hotPicks[qId].length : 0;
+        return { a, b, total, pctA, pctB, diff, closeness, hotCount, votersA, votersB };
+      },
+
+      renderTeacherView() {
+        if (this.role !== 'teacher') return;
+        const activeQs = this.getActiveQuestions(this.roomCode);
+        const studentList = Object.values(this.state.students).sort((x, y) => (x.num || parseInt(x.name, 10) || 99) - (y.num || parseInt(y.name, 10) || 99));
+
+        const isCustomClass = Boolean(this.classQuestionsMap[this.roomCode]);
+        const statusTextEl = document.getElementById('teacherCustomQStatusText');
+        if (statusTextEl) {
+          statusTextEl.innerHTML = isCustomClass
+            ? `📌 현재 <strong>${this.formatClassName(this.roomCode)} 전용 수정 문항(${activeQs.length}개)</strong>이 적용되어 있습니다.`
+            : `🌐 현재 <strong>전체 학급 공통 문항(${activeQs.length}개)</strong>이 적용되어 있습니다.`;
+        }
+
+        // 1. Render Lobby Student List
+        let completedStudents = 0;
+        studentList.forEach(st => {
+          let cnt = 0;
+          activeQs.forEach(q => {
+            if (this.state.votes1[q.id] && this.state.votes1[q.id][st.id]) cnt++;
+          });
+          if (cnt >= activeQs.length) completedStudents++;
+        });
+
+        document.getElementById('lobbyStudentCount').textContent = studentList.length;
+        document.getElementById('lobbyDoneCount').textContent = `(투표 완료 ${completedStudents}명)`;
+
+        const grid = document.getElementById('lobbyStudentList');
+        if (studentList.length === 0) {
+          grid.innerHTML = `<div style="color:var(--text-muted); padding:32px 0; width:100%; text-align:center;">
+            아직 입장한 배심원이 없습니다.<br/>우측 상단 <strong>[✨ 21명 예시 데이터 채우기]</strong>를 누르면 21명 기준 결과와 4개 모둠(2~3 : 2~3) 책상 배치도를 바로 확인하실 수 있습니다!
+          </div>`;
+        } else {
+          grid.innerHTML = studentList.map(st => {
+            let cnt = 0;
+            activeQs.forEach(q => {
+              if (this.state.votes1[q.id] && this.state.votes1[q.id][st.id]) cnt++;
+            });
+            const isDone = cnt >= activeQs.length;
+            return `
+              <div class="student-badge ${isDone ? 'done' : ''}">
+                <span>${isDone ? '✅' : '🧑‍⚖️'} ${this.escapeHtml(st.name)}</span>
+                <span style="font-size:0.78rem; opacity:0.85;">(${cnt}/${activeQs.length})</span>
+              </div>
+            `;
+          }).join('');
+        }
+
+        // 2. Render Results Page (Top 1~3 Closest + All 10 Questions)
+        if (this.teacherTab === 'results') {
+          const allStats = activeQs.map((q, idx) => {
+            return { q, num: idx + 1, ...this.getQuestionStats(q.id) };
+          });
+
+          // Tie-Breaking Ranking Criteria:
+          // 1순위: 표 차이(diff)가 가장 적은 순 (closeness 높은 순)
+          // 2순위: 학생들이 '가장 토의하고 싶은 사건(🔥 핫이슈)'으로 뽑은 득표수(hotCount)가 많은 순
+          // 3순위: 총 투표 참여 인원순
+          const top3 = allStats.slice().sort((x, y) => {
+            if (y.closeness !== x.closeness) return y.closeness - x.closeness;
+            if (y.hotCount !== x.hotCount) return y.hotCount - x.hotCount;
+            return y.total - x.total;
+          }).slice(0, 3);
+
+          const medals = [
+            { cls: 'medal-1', icon: '🥇 박빙 1위' },
+            { cls: 'medal-2', icon: '🥈 박빙 2위' },
+            { cls: 'medal-3', icon: '🥉 박빙 3위' }
+          ];
+
+          document.getElementById('top3ClosestContainer').innerHTML = top3.map((item, rIdx) => `
+            <div class="top3-card ${rIdx === 0 ? 'rank-1' : ''}">
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px; margin-bottom:8px;">
+                  <span class="medal-badge ${medals[rIdx].cls}">${medals[rIdx].icon} (Q${item.num})</span>
+                  <div style="display:flex; gap:6px; align-items:center;">
+                    <span style="font-size:0.8rem; font-weight:800; color:var(--gold);">
+                      ${item.diff}표 차이 (${item.a}:${item.b})
+                    </span>
+                    ${item.hotCount > 0 ? `<span style="background:#fee2e2; color:#b91c1c; font-size:0.75rem; font-weight:900; padding:2px 8px; border-radius:999px;">🔥 관심도 ${item.hotCount}표</span>` : ''}
+                  </div>
+                </div>
+
+                <div style="font-size:0.78rem; font-weight:700; color:var(--text-sub); margin-bottom:4px;">
+                  ${this.escapeHtml(item.q.unit)} · ${this.escapeHtml(item.q.cases)}
+                </div>
+                <h3 style="font-size:1.1rem; font-weight:900; color:var(--navy); margin-bottom:10px; word-break:keep-all;">
+                  Q${item.num}. ${this.escapeHtml(item.q.question)}
+                </h3>
+
+                <div style="font-size:0.83rem; margin-bottom:8px; display:flex; flex-direction:column; gap:4px;">
+                  <div style="color:var(--side-a); font-weight:700;">🅰️ ${this.escapeHtml(item.q.optionA)}</div>
+                  <div style="color:var(--side-b); font-weight:700;">🅱️ ${this.escapeHtml(item.q.optionB)}</div>
+                </div>
+
+                <div class="tug-bar" style="height:36px; margin-bottom:10px;">
+                  <div class="center-line"></div>
+                  <div class="tug-a" style="width:${item.pctA}%; font-size:0.86rem;">🅰️ ${item.a}명 (${item.pctA}%)</div>
+                  <div class="tug-b" style="width:${item.pctB}%; font-size:0.86rem;">(${item.pctB}%) ${item.b}명 🅱️</div>
+                </div>
+
+                <div class="voter-columns">
+                  <div class="voter-box-a">
+                    <div style="font-weight:900; color:var(--side-a); margin-bottom:3px;">🅰️ 선택 배심원 (${item.a}명)</div>
+                    <div style="color:#1e3a8a; line-height:1.4;">${item.votersA.length ? item.votersA.map(n => this.escapeHtml(n)).join(', ') : '-'}</div>
+                  </div>
+                  <div class="voter-box-b">
+                    <div style="font-weight:900; color:var(--side-b); margin-bottom:3px;">🅱️ 선택 배심원 (${item.b}명)</div>
+                    <div style="color:#881337; line-height:1.4;">${item.votersB.length ? item.votersB.map(n => this.escapeHtml(n)).join(', ') : '-'}</div>
+                  </div>
+                </div>
+              </div>
+
+              <button class="btn btn-sm btn-navy" style="width:100%;" onclick="App.openTeamMatchModal('${item.q.id}', ${item.num})">
+                🪑 이 문항으로 4개 모둠(2~3 : 2~3) 책상 배치도 보기
+              </button>
+            </div>
+          `).join('');
+
+          // Render All 10 Questions List
+          document.getElementById('allQuestionsResultList').innerHTML = allStats.map(item => `
+            <div class="q-result-item">
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:6px;">
+                <span style="background:var(--navy); color:#fff; font-weight:800; font-size:0.8rem; padding:3px 10px; border-radius:999px;">
+                  문항 ${item.num} · ${this.escapeHtml(item.q.unit)} (${this.escapeHtml(item.q.cases)})
+                </span>
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <span style="font-size:0.84rem; font-weight:800; color:var(--text-sub);">
+                    총 ${item.total}명 (🅰️ ${item.a}명 : 🅱️ ${item.b}명)
+                  </span>
+                  <button class="btn btn-xs btn-outline" onclick="App.openTeamMatchModal('${item.q.id}', ${item.num})">
+                    🪑 4모둠(2~3:2~3) 배치도
+                  </button>
+                </div>
+              </div>
+
+              <h3 style="font-size:1.15rem; font-weight:900; color:var(--navy); margin-bottom:10px; word-break:keep-all;">
+                Q${item.num}. ${this.escapeHtml(item.q.question)}
+              </h3>
+
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+                <div style="background:var(--side-a-light); border:1.5px solid var(--side-a-border); padding:10px 14px; border-radius:10px;">
+                  <div style="font-weight:900; color:var(--side-a); margin-bottom:3px;">🅰️ 선택 A (${item.a}명 · ${item.pctA}%)</div>
+                  <div style="font-size:0.9rem; font-weight:700; color:#1e3a8a;">${this.escapeHtml(item.q.optionA)}</div>
+                </div>
+                <div style="background:var(--side-b-light); border:1.5px solid var(--side-b-border); padding:10px 14px; border-radius:10px;">
+                  <div style="font-weight:900; color:var(--side-b); margin-bottom:3px;">🅱️ 선택 B (${item.b}명 · ${item.pctB}%)</div>
+                  <div style="font-size:0.9rem; font-weight:700; color:#881337;">${this.escapeHtml(item.q.optionB)}</div>
+                </div>
+              </div>
+
+              <div class="tug-bar" style="height:34px; margin-bottom:10px;">
+                <div class="center-line"></div>
+                <div class="tug-a" style="width:${item.pctA}%;">🅰️ ${item.pctA}% (${item.a}명)</div>
+                <div class="tug-b" style="width:${item.pctB}%;">(${item.b}명) ${item.pctB}% 🅱️</div>
+              </div>
+
+              <div style="background:var(--emerald-light); border:1px solid #a7f3d0; padding:9px 14px; border-radius:10px; font-size:0.86rem; color:#065f46;">
+                <strong>💡 책 속 실제 판결:</strong> ${this.escapeHtml(item.q.rulingTip || '')}
+              </div>
+            </div>
+          `).join('');
+        }
+      },
+
+      /* -------------------- 4-Group (2~3 : 2~3) Classroom Desk & Chair Visualizer -------------------- */
+      openTeamMatchModal(qId, qNum) {
+        this.activeTeamQId = qId;
+        this.activeTeamQNum = qNum;
+        this.teamShuffleSeed = 0;
+        this.selectedSeatSwap = null;
+        this.buildInitialTeamGroups();
+        this.renderTeamMatchModalContent();
+        document.getElementById('modal-teams').classList.remove('hidden');
+      },
+
+      shuffleAndRenderTeams() {
+        this.teamShuffleSeed += 1;
+        this.selectedSeatSwap = null;
+        this.buildInitialTeamGroups();
+        this.renderTeamMatchModalContent();
+      },
+
+      buildInitialTeamGroups() {
+        const stats = this.getQuestionStats(this.activeTeamQId);
+        const listA = stats.votersA.slice();
+        const listB = stats.votersB.slice();
+
+        if (this.teamShuffleSeed > 0) {
+          const shuffle = (arr) => {
+            for (let i = arr.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+          };
+          shuffle(listA);
+          shuffle(listB);
+        }
+
+        const NUM_GROUPS = 4;
+        this.currentGroups = Array.from({ length: NUM_GROUPS }, () => ({ teamA: [], teamB: [] }));
+
+        listA.forEach((studentName, idx) => {
+          this.currentGroups[idx % NUM_GROUPS].teamA.push(studentName);
+        });
+        listB.forEach((studentName, idx) => {
+          const gIdx = (NUM_GROUPS - 1) - (idx % NUM_GROUPS);
+          this.currentGroups[gIdx].teamB.push(studentName);
+        });
+      },
+
+      clickSeatToSwap(gIdx, side, sIdx) {
+        if (!this.selectedSeatSwap) {
+          this.selectedSeatSwap = { gIdx, side, sIdx };
+          this.renderTeamMatchModalContent();
+          return;
+        }
+        const prev = this.selectedSeatSwap;
+        this.selectedSeatSwap = null;
+        if (prev.gIdx === gIdx && prev.side === side && prev.sIdx === sIdx) {
+          this.renderTeamMatchModalContent();
+          return;
+        }
+        const arr1 = prev.side === 'A' ? this.currentGroups[prev.gIdx].teamA : this.currentGroups[prev.gIdx].teamB;
+        const arr2 = side === 'A' ? this.currentGroups[gIdx].teamA : this.currentGroups[gIdx].teamB;
+        const temp = arr1[prev.sIdx];
+        arr1[prev.sIdx] = arr2[sIdx];
+        arr2[sIdx] = temp;
+        this.renderTeamMatchModalContent();
+      },
+
+      renderTeamMatchModalContent() {
+        const qId = this.activeTeamQId;
+        const qNum = this.activeTeamQNum;
+        const activeQs = this.getActiveQuestions(this.roomCode);
+        const qObj = activeQs.find(q => q.id === qId) || activeQs[0];
+        const stats = this.getQuestionStats(qId);
+
+        document.getElementById('teamModalClassBadge').textContent =
+          `${this.formatClassName(this.roomCode)} · 총 ${stats.total}명 (🅰️ ${stats.a}명 : 🅱️ ${stats.b}명)`;
+        document.getElementById('teamModalTitle').textContent =
+          `🪑 Q${qNum}번 문항 — 4개 모둠(2~3 : 2~3) 책상·의자 배치도`;
+        document.getElementById('teamModalSubDesc').innerHTML =
+          `<strong>토의 주제 (Q${qNum}):</strong> ${this.escapeHtml(qObj ? qObj.question : '')}<br/>
+           <span style="font-size:0.83rem; font-weight:600; color:#334155;">
+             • 반 전체 인원을 <strong>총 4개 모둠(1모둠~4모둠)</strong>으로 나누어 각 모둠에 <strong>파란 의자(🅰️ 2~3명)</strong>와 <strong>빨간 의자(🅱️ 2~3명)</strong>가 마주 보도록 자동 편성했습니다. <strong>(💡 특정 학생의 자리를 바꾸려면 의자 2개를 차례로 클릭하세요!)</strong>
+           </span>`;
+
+        const container = document.getElementById('teamMatchResultGrid');
+        if (stats.total === 0) {
+          container.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:30px; color:var(--text-sub);">아직 투표한 학생이 없습니다.</div>`;
+          return;
+        }
+
+        const groups = this.currentGroups || [];
+
+        const renderSeat = (studentName, side, isTopRow, gIdx, sIdx) => {
+          const isSelected = this.selectedSeatSwap &&
+            this.selectedSeatSwap.gIdx === gIdx &&
+            this.selectedSeatSwap.side === side &&
+            this.selectedSeatSwap.sIdx === sIdx;
+          const highlightStyle = isSelected ? 'outline: 3.5px solid #f59e0b; transform: scale(1.06); background:#fef3c7;' : '';
+          return `
+            <div class="student-seat seat-${side.toLowerCase()}" style="cursor:pointer;" onclick="App.clickSeatToSwap(${gIdx}, '${side}', ${sIdx})" title="클릭하여 다른 학생과 모둠 자리 맞바꾸기">
+              ${isTopRow ? `<div class="chair-back"></div>` : ''}
+              <div class="chair-cushion" style="${highlightStyle}">
+                <span class="seat-side-tag">${side} 배심원</span>
+                <span>${this.escapeHtml(studentName)}</span>
+              </div>
+              ${!isTopRow ? `<div class="chair-back bottom-orient"></div>` : ''}
+            </div>
+          `;
+        };
+
+        container.innerHTML = groups.map((g, idx) => {
+          const countA = g.teamA.length;
+          const countB = g.teamB.length;
+          const topSeatsHtml = g.teamA.map((n, sIdx) => renderSeat(n, 'A', true, idx, sIdx)).join('');
+          const bottomSeatsHtml = g.teamB.map((n, sIdx) => renderSeat(n, 'B', false, idx, sIdx)).join('');
+
+          return `
+            <div class="group-pod">
+              <div class="group-pod-header">
+                <div class="group-pod-title">
+                  <span>🏛️ 제 ${idx + 1} 모둠</span>
+                  <span style="font-size:0.8rem; color:var(--text-sub);">(${countA + countB}인 합의부)</span>
+                </div>
+                <span style="font-size:0.8rem; font-weight:800; background:#fef3c7; color:#92400e; padding:3px 10px; border-radius:999px; border:1px solid #f59e0b;">
+                  🅰️ ${countA}명 : 🅱️ ${countB}명
+                </span>
+              </div>
+
+              <div class="table-arrangement">
+                <!-- Top Row Chairs (A Side) -->
+                <div class="seats-row">
+                  ${topSeatsHtml || `<div style="font-size:0.8rem; color:var(--text-muted); padding:6px;">-</div>`}
+                </div>
+
+                <!-- Center Wooden Desk Table -->
+                <div class="wooden-desk">
+                  <div class="desk-label">🪑 ${idx + 1}모둠 토의 책상 (활동지 1장)</div>
+                </div>
+
+                <!-- Bottom Row Chairs (B Side) -->
+                <div class="seats-row">
+                  ${bottomSeatsHtml || `<div style="font-size:0.8rem; color:var(--text-muted); padding:6px;">-</div>`}
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      },
+
+      /* -------------------- Student Self-Paced Voting -------------------- */
+      startStudentMode() {
+        const r = document.getElementById('studentRoomInput').value.trim() || '107';
+        const num = parseInt(document.getElementById('studentNumberSelect').value, 10) || 1;
+        const nameOnly = document.getElementById('studentNameOnlyInput').value.trim();
+
+        if (!nameOnly) {
+          alert('이름을 입력해 주세요! (예: 김민준)');
+          document.getElementById('studentNameOnlyInput').focus();
+          return;
+        }
+
+        this.roomCode = r;
+        this.studentNum = num;
+        this.studentName = `${num}번 ${nameOnly}`;
+        this.studentId = `st${r}_${num}`;
+
+        localStorage.setItem('agy_court_student_num', String(num));
+        localStorage.setItem('agy_court_student_name_only', nameOnly);
+
+        Net.subscribeRoom(r);
+        this.loadRoomFromStorage(r);
+
+        this.state.students[this.studentId] = {
+          id: this.studentId,
+          num: this.studentNum,
+          name: this.studentName,
+          joinedAt: Date.now()
+        };
+        this.saveRoomToStorage();
+
+        document.getElementById('stRoomBadge').textContent = `${this.formatClassName(r)} 법정`;
+        document.getElementById('stNameDisplay').textContent = `${this.studentName} 배심원`;
+
+        const activeQs = this.getActiveQuestions(r);
+        const firstUnanswered = activeQs.findIndex(q => !(this.state.votes1[q.id] && this.state.votes1[q.id][this.studentId]));
+        if (firstUnanswered === -1) {
+          this.studentQIndex = 0;
+          this.studentDoneView = true;
+        } else {
+          this.studentQIndex = firstUnanswered;
+          this.studentDoneView = false;
+        }
+
+        this.showScreen('student');
+        Net.publish('student_join', {
+          studentId: this.studentId,
+          num: this.studentNum,
+          name: this.studentName
+        });
+        this.renderStudentView();
+      },
+
+      studentSelectQ(idx) {
+        this.studentQIndex = idx;
+        this.studentDoneView = false;
+        this.renderStudentView();
+      },
+
+      studentMoveQ(dir) {
+        const activeQs = this.getActiveQuestions(this.roomCode);
+        const nextIdx = this.studentQIndex + dir;
+        if (nextIdx >= 0 && nextIdx < activeQs.length) {
+          this.studentQIndex = nextIdx;
+          this.renderStudentView();
+        } else if (nextIdx >= activeQs.length) {
+          this.studentDoneView = true;
+          this.renderStudentView();
+        }
+      },
+
+      studentReviewQuestions() {
+        this.studentQIndex = 0;
+        this.studentDoneView = false;
+        this.renderStudentView();
+      },
+
+      studentCastQuizVote(choice) {
+        const activeQs = this.getActiveQuestions(this.roomCode);
+        const q = activeQs[this.studentQIndex] || activeQs[0];
+        if (!q) return;
+
+        if (!this.state.votes1[q.id]) this.state.votes1[q.id] = {};
+        this.state.votes1[q.id][this.studentId] = choice;
+        this.saveRoomToStorage();
+
+        Net.publish('student_vote1', {
+          studentId: this.studentId,
+          num: this.studentNum,
+          name: this.studentName,
+          qId: q.id,
+          choice
+        });
+
+        this.renderStudentView();
+
+        setTimeout(() => {
+          if (this.studentQIndex + 1 < activeQs.length) {
+            this.studentQIndex += 1;
+            this.renderStudentView();
+          } else {
+            this.studentDoneView = true;
+            this.renderStudentView();
+          }
+        }, 250);
+      },
+
+      studentToggleHotPick(qId) {
+        if (!this.state.hotPicks) this.state.hotPicks = {};
+        if (!this.state.hotPicks[qId]) this.state.hotPicks[qId] = [];
+        const list = this.state.hotPicks[qId];
+        const idx = list.indexOf(this.studentId);
+        if (idx === -1) list.push(this.studentId);
+        else list.splice(idx, 1);
+
+        this.saveRoomToStorage();
+        Net.publish('student_hotpick', {
+          studentId: this.studentId,
+          qId
+        });
+        this.renderStudentView();
+      },
+
+      renderStudentView() {
+        if (this.role !== 'student') return;
+        const activeQs = this.getActiveQuestions(this.roomCode);
+
+        document.getElementById('st-view-quiz').classList.toggle('hidden', this.studentDoneView);
+        document.getElementById('st-view-done10').classList.toggle('hidden', !this.studentDoneView);
+
+        let answeredCount = 0;
+        activeQs.forEach(item => {
+          if ((this.state.votes1[item.id] || {})[this.studentId]) answeredCount++;
+        });
+
+        if (!this.studentDoneView) {
+          if (this.studentQIndex >= activeQs.length) this.studentQIndex = 0;
+          const q = activeQs[this.studentQIndex];
+          const myVote = (this.state.votes1[q.id] || {})[this.studentId];
+
+          document.getElementById('stAnsweredCounter').textContent = `${answeredCount} / ${activeQs.length} 완료`;
+          document.getElementById('studentQDots').innerHTML = activeQs.map((item, idx) => {
+            const v = (this.state.votes1[item.id] || {})[this.studentId];
+            let cls = 'q-dot';
+            if (idx === this.studentQIndex) cls += ' current';
+            else if (v === 'A') cls += ' answered-a';
+            else if (v === 'B') cls += ' answered-b';
+            return `<button class="${cls}" onclick="App.studentSelectQ(${idx})">${idx + 1}</button>`;
+          }).join('');
+
+          document.getElementById('stQuizNumTag').textContent = `문항 ${this.studentQIndex + 1} / ${activeQs.length} · ${q.unit}`;
+          document.getElementById('stQuizCaseSummary').textContent = `📖 ${q.summary}`;
+          document.getElementById('stQuizTitle').textContent = `Q${this.studentQIndex + 1}. ${q.question}`;
+          document.getElementById('stQuizOptA').textContent = q.optionA;
+          document.getElementById('stQuizOptB').textContent = q.optionB;
+
+          document.getElementById('stBtnVoteA').classList.toggle('selected', myVote === 'A');
+          document.getElementById('stBtnVoteB').classList.toggle('selected', myVote === 'B');
+          document.getElementById('stBtnPrevQ').disabled = (this.studentQIndex === 0);
+        } else {
+          const summaryEl = document.getElementById('stMySummaryList');
+          summaryEl.innerHTML = activeQs.map((q, idx) => {
+            const myV = (this.state.votes1[q.id] || {})[this.studentId] || '-';
+            const badgeBg = myV === 'A' ? 'var(--side-a)' : (myV === 'B' ? 'var(--side-b)' : '#94a3b8');
+            const isHot = (this.state.hotPicks && this.state.hotPicks[q.id] && this.state.hotPicks[q.id].includes(this.studentId));
+            return `
+              <div style="background:#f8fafc; border:1.5px solid var(--border); padding:10px 14px; border-radius:12px; display:flex; justify-content:space-between; align-items:center; gap:10px;">
+                <div style="font-size:0.88rem; font-weight:800; color:var(--navy); flex:1; cursor:pointer;" onclick="App.studentSelectQ(${idx})">
+                  Q${idx + 1}. ${this.escapeHtml(q.question)}
+                </div>
+                <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+                  <span style="background:${badgeBg}; color:#fff; font-weight:900; font-size:0.82rem; padding:4px 10px; border-radius:999px;">
+                    내 선택: ${myV}
+                  </span>
+                  <button class="btn btn-xs" style="background:${isHot ? '#fee2e2' : '#fff'}; border:1.5px solid ${isHot ? '#ef4444' : '#cbd5e1'}; color:${isHot ? '#b91c1c' : '#475569'};" onclick="App.studentToggleHotPick('${q.id}')">
+                    🔥 ${isHot ? '토의 희망!' : '토의 픽'}
+                  </button>
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+      },
+
+      /* -------------------- Incoming Sync Handler -------------------- */
+      handleIncomingMessage(type, payload, msgRoom) {
+        if (type === 'global_questions' && payload) {
+          if (payload.target === 'common' && Array.isArray(payload.questions)) {
+            this.commonQuestions = payload.questions;
+            localStorage.setItem('agy_court_common_questions_v3', JSON.stringify(this.commonQuestions));
+          } else if (payload.target && Array.isArray(payload.questions)) {
+            this.classQuestionsMap[payload.target] = payload.questions;
+            localStorage.setItem('agy_court_class_questions_map_v3', JSON.stringify(this.classQuestionsMap));
+          }
+          if (this.role === 'teacher') this.renderTeacherView();
+          if (this.role === 'student') this.renderStudentView();
+          return;
+        }
+
+        if (String(msgRoom) !== String(this.roomCode)) return;
+
+        if (type === 'room_state' && this.role === 'student' && payload.state) {
+          this.renderStudentView();
+          return;
+        }
+
+        if (type === 'student_join') {
+          this.state.students[payload.studentId] = {
+            id: payload.studentId,
+            num: payload.num || 99,
+            name: payload.name,
+            joinedAt: Date.now()
+          };
+          this.saveRoomToStorage();
+          if (this.role === 'teacher') this.renderTeacherView();
+        }
+        else if (type === 'student_vote1') {
+          const { studentId, num, name, qId, choice } = payload;
+          if (!this.state.students[studentId] && name) {
+            this.state.students[studentId] = { id: studentId, num: num || 99, name, joinedAt: Date.now() };
+          }
+          if (!this.state.votes1[qId]) this.state.votes1[qId] = {};
+          this.state.votes1[qId][studentId] = choice;
+          this.saveRoomToStorage();
+          if (this.role === 'teacher') this.renderTeacherView();
+        }
+        else if (type === 'student_hotpick') {
+          const { studentId, qId } = payload;
+          if (!this.state.hotPicks) this.state.hotPicks = {};
+          if (!this.state.hotPicks[qId]) this.state.hotPicks[qId] = [];
+          const list = this.state.hotPicks[qId];
+          const idx = list.indexOf(studentId);
+          if (idx === -1) list.push(studentId);
+          else list.splice(idx, 1);
+          this.saveRoomToStorage();
+          if (this.role === 'teacher') this.renderTeacherView();
+        }
+      },
+
+      /* -------------------- Per-Class Admin Question Editor -------------------- */
+      openAdminModal() {
+        // If currently in Teacher Mode (or a specific class is selected), default to that class!
+        this.adminTargetClass = (this.role === 'teacher' && this.roomCode) ? String(this.roomCode) : 'common';
+        document.getElementById('adminTargetClassSelect').value = this.adminTargetClass;
+        const pwIn = document.getElementById('adminPwChangeInput');
+        if (pwIn) pwIn.value = this.teacherPassword;
+        this.expandedAdminIdx = -1;
+        this.renderAdminQuestions();
+        document.getElementById('modal-admin').classList.remove('hidden');
+      },
+
+      changeTeacherPassword() {
+        const val = document.getElementById('adminPwChangeInput').value.trim();
+        if (!val) return alert('변경할 비밀번호를 입력해 주세요.');
+        this.teacherPassword = val;
+        localStorage.setItem('agy_court_teacher_pw_v3', val);
+        alert(`✅ 교사 비밀번호가 [${val}](으)로 변경되었습니다!`);
+      },
+
+      changeAdminTargetClass(targetVal) {
+        this.adminTargetClass = targetVal;
+        this.expandedAdminIdx = -1;
+        this.renderAdminQuestions();
+      },
+
+      getMutableAdminQuestionList() {
+        if (this.adminTargetClass === 'common') {
+          return this.commonQuestions;
+        }
+        // If this class doesn't have its own copy yet, clone from commonQuestions so editing only affects this class!
+        if (!this.classQuestionsMap[this.adminTargetClass]) {
+          this.classQuestionsMap[this.adminTargetClass] = JSON.parse(JSON.stringify(this.commonQuestions));
+        }
+        return this.classQuestionsMap[this.adminTargetClass];
+      },
+
+      toggleAdminExpand(idx) {
+        this.expandedAdminIdx = (this.expandedAdminIdx === idx) ? -1 : idx;
+        this.renderAdminQuestions();
+      },
+
+      renderAdminQuestions() {
+        const isCommon = (this.adminTargetClass === 'common');
+        const hasCustom = !isCommon && Boolean(this.classQuestionsMap[this.adminTargetClass]);
+        const pill = document.getElementById('adminClassStatusPill');
+        if (pill) {
+          if (isCommon) pill.textContent = '모든 반 기본 적용';
+          else if (hasCustom) pill.textContent = `${this.formatClassName(this.adminTargetClass)} 개별 수정됨`;
+          else pill.textContent = `공통 문항 사용 중 (수정 시 ${this.formatClassName(this.adminTargetClass)}만 변경)`;
+        }
+
+        const list = isCommon
+          ? this.commonQuestions
+          : (this.classQuestionsMap[this.adminTargetClass] || this.commonQuestions);
+
+        const container = document.getElementById('adminQuestionList');
+        container.innerHTML = list.map((q, idx) => {
+          const isOpen = (this.expandedAdminIdx === idx);
+          return `
+            <div class="admin-compact-item">
+              <div class="admin-compact-header" onclick="App.toggleAdminExpand(${idx})">
+                <div style="display:flex; align-items:center; gap:8px; flex:1; overflow:hidden;">
+                  <input type="checkbox" data-idx="${idx}" data-field="enabled" ${q.enabled !== false ? 'checked' : ''} onclick="event.stopPropagation()" onchange="App.updateAdminField(this)" />
+                  <span style="background:var(--navy); color:#fff; font-weight:800; padding:2px 8px; border-radius:6px; font-size:0.75rem; flex-shrink:0;">
+                    #${idx + 1}
+                  </span>
+                  <span style="font-size:0.88rem; font-weight:800; color:var(--navy); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                    ${this.escapeHtml(q.question)}
+                  </span>
+                </div>
+                <div style="display:flex; align-items:center; gap:5px; flex-shrink:0;" onclick="event.stopPropagation()">
+                  <button class="btn btn-xs btn-outline" onclick="App.moveAdminQuestion(${idx}, -1)" ${idx === 0 ? 'disabled' : ''}>▲</button>
+                  <button class="btn btn-xs btn-outline" onclick="App.moveAdminQuestion(${idx}, 1)" ${idx === list.length - 1 ? 'disabled' : ''}>▼</button>
+                  <button class="btn btn-xs btn-outline" style="color:var(--side-b);" onclick="App.deleteAdminQuestion(${idx})">삭제</button>
+                  <span style="font-size:0.8rem; color:var(--text-sub); margin-left:4px; cursor:pointer;" onclick="App.toggleAdminExpand(${idx})">${isOpen ? '접기 ▲' : '수정 ▼'}</span>
+                </div>
+              </div>
+
+              <div class="admin-compact-body ${isOpen ? '' : 'hidden'}">
+                <div class="admin-grid-2">
+                  <div>
+                    <label class="label">단원명</label>
+                    <input type="text" class="input" data-idx="${idx}" data-field="unit" value="${this.escapeAttr(q.unit)}" oninput="App.updateAdminField(this)" />
+                  </div>
+                  <div>
+                    <label class="label">연계 판례</label>
+                    <input type="text" class="input" data-idx="${idx}" data-field="cases" value="${this.escapeAttr(q.cases)}" oninput="App.updateAdminField(this)" />
+                  </div>
+                </div>
+
+                <div style="margin-top:8px;">
+                  <label class="label">책 속 사건 요약</label>
+                  <input type="text" class="input" data-idx="${idx}" data-field="summary" value="${this.escapeAttr(q.summary)}" oninput="App.updateAdminField(this)" />
+                </div>
+
+                <div style="margin-top:8px;">
+                  <label class="label">⚖️ 밸런스 질문</label>
+                  <input type="text" class="input" data-idx="${idx}" data-field="question" value="${this.escapeAttr(q.question)}" oninput="App.updateAdminField(this)" />
+                </div>
+
+                <div class="admin-grid-2">
+                  <div>
+                    <label class="label" style="color:var(--side-a);">🅰️ 선택지 A</label>
+                    <input type="text" class="input" data-idx="${idx}" data-field="optionA" value="${this.escapeAttr(q.optionA)}" oninput="App.updateAdminField(this)" />
+                  </div>
+                  <div>
+                    <label class="label" style="color:var(--side-b);">🅱️ 선택지 B</label>
+                    <input type="text" class="input" data-idx="${idx}" data-field="optionB" value="${this.escapeAttr(q.optionB)}" oninput="App.updateAdminField(this)" />
+                  </div>
+                </div>
+
+                <div style="margin-top:8px;">
+                  <label class="label" style="color:var(--emerald);">💡 실제 판결 한 줄 해설</label>
+                  <input type="text" class="input" data-idx="${idx}" data-field="rulingTip" value="${this.escapeAttr(q.rulingTip || '')}" oninput="App.updateAdminField(this)" />
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      },
+
+      updateAdminField(el) {
+        const list = this.getMutableAdminQuestionList();
+        const idx = parseInt(el.getAttribute('data-idx'), 10);
+        const field = el.getAttribute('data-field');
+        if (!list[idx]) return;
+        if (field === 'enabled') list[idx].enabled = el.checked;
+        else list[idx][field] = el.value;
+      },
+
+      addAdminQuestion() {
+        const list = this.getMutableAdminQuestionList();
+        list.push({
+          id: 'q_' + Date.now(),
+          enabled: true,
+          unit: '추가 단원',
+          cases: '관련 판례',
+          summary: '사건의 배경 상황을 간단히 적어주세요.',
+          question: '새로운 양자택일 밸런스 질문을 입력해 주세요.',
+          optionA: '선택지 A 입장',
+          optionB: '선택지 B 입장',
+          rulingTip: '실제 판결이나 참고 해설을 입력해 주세요.'
+        });
+        this.expandedAdminIdx = list.length - 1;
+        this.renderAdminQuestions();
+      },
+
+      deleteAdminQuestion(idx) {
+        const list = this.getMutableAdminQuestionList();
+        if (list.length <= 1) return alert('최소 1개 이상의 문항이 있어야 합니다.');
+        if (!confirm(`문항 #${idx + 1}을(를) 삭제하시겠습니까?`)) return;
+        list.splice(idx, 1);
+        this.expandedAdminIdx = -1;
+        this.renderAdminQuestions();
+      },
+
+      moveAdminQuestion(idx, dir) {
+        const list = this.getMutableAdminQuestionList();
+        const target = idx + dir;
+        if (target < 0 || target >= list.length) return;
+        const temp = list[idx];
+        list[idx] = list[target];
+        list[target] = temp;
+        this.expandedAdminIdx = target;
+        this.renderAdminQuestions();
+      },
+
+      saveAdminQuestions() {
+        localStorage.setItem('agy_court_common_questions_v3', JSON.stringify(this.commonQuestions));
+        localStorage.setItem('agy_court_class_questions_map_v3', JSON.stringify(this.classQuestionsMap));
+
+        const targetList = this.adminTargetClass === 'common'
+          ? this.commonQuestions
+          : (this.classQuestionsMap[this.adminTargetClass] || this.commonQuestions);
+
+        Net.publish('global_questions', {
+          target: this.adminTargetClass,
+          questions: targetList
+        }, true, 'global_questions');
+
+        if (this.role === 'teacher') this.renderTeacherView();
+        if (this.role === 'student') this.renderStudentView();
+        this.closeModals();
+      },
+
+      resetTargetQuestions() {
+        if (this.adminTargetClass === 'common') {
+          if (!confirm('전체 학급 공통 문항을 처음 기본 10문항으로 초기화할까요?')) return;
+          this.commonQuestions = JSON.parse(JSON.stringify(DEFAULT_QUESTIONS));
+          localStorage.setItem('agy_court_common_questions_v3', JSON.stringify(this.commonQuestions));
+        } else {
+          const cname = this.formatClassName(this.adminTargetClass);
+          if (!confirm(`${cname}의 전용 문항 설정을 해제하고 전체 공통 문항으로 되돌릴까요?`)) return;
+          delete this.classQuestionsMap[this.adminTargetClass];
+          localStorage.setItem('agy_court_class_questions_map_v3', JSON.stringify(this.classQuestionsMap));
+        }
+        this.expandedAdminIdx = -1;
+        this.renderAdminQuestions();
+      },
+
+      downloadUpdatedHtmlFile() {
+        this.saveAdminQuestions();
+        let htmlSource = document.documentElement.outerHTML;
+        const regex = /const DEFAULT_QUESTIONS = \[[\s\S]*?\];/;
+        const replacement = `const DEFAULT_QUESTIONS = ${JSON.stringify(this.commonQuestions, null, 2)};`;
+        htmlSource = '<!DOCTYPE html>\n' + htmlSource.replace(regex, replacement);
+
+        const blob = new Blob([htmlSource], { type: 'text/html;charset=utf-8' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = '우리반대법원_판결밸런스게임_수정본.html';
+        a.click();
+      },
+
+      openUrlConfigModal() {
+        const current = this.customJoinUrl || localStorage.getItem('agy_court_custom_url') || window.location.href.split('?')[0];
+        document.getElementById('customJoinUrlInput').value = current;
+        document.getElementById('modal-url').classList.remove('hidden');
+      },
+
+      saveCustomJoinUrl() {
+        const val = document.getElementById('customJoinUrlInput').value.trim();
+        if (val) {
+          this.customJoinUrl = val;
+          localStorage.setItem('agy_court_custom_url', val);
+          this.renderTeacherLobbyInfo();
+        }
+        this.closeModals();
+      },
+
+      closeModals() {
+        document.querySelectorAll('.modal-backdrop').forEach(m => m.classList.add('hidden'));
+      },
+
+      escapeHtml(str) {
+        return String(str ?? '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      },
+      escapeAttr(str) {
+        return String(str ?? '').replace(/"/g, '&quot;');
+      }
+    };
+
+    window.addEventListener('DOMContentLoaded', () => App.init());
+  </script>
+</body>
+</html>

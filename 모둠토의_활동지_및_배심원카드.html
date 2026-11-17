@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>[인쇄용] 우리 반 대법원 2:2 모둠 토의 활동지 및 배심원 카드</title>
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    body {
+      background: #e2e8f0;
+      color: #1e293b;
+      padding: 24px 0 60px;
+    }
+
+    /* Floating Print Toolbar (Hidden when printing) */
+    .print-toolbar {
+      max-width: 210mm;
+      margin: 0 auto 18px;
+      background: #1e3a5f;
+      color: #fff;
+      padding: 14px 22px;
+      border-radius: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-print {
+      background: #f59e0b;
+      color: #1e293b;
+      font-weight: 900;
+      font-size: 0.98rem;
+      padding: 10px 20px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+    }
+    .btn-print:hover { background: #fbbf24; }
+
+    /* A4 Sheet */
+    .a4-page {
+      width: 210mm;
+      min-height: 297mm;
+      background: #ffffff;
+      margin: 0 auto 28px;
+      padding: 14mm 15mm;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    @page {
+      size: A4 portrait;
+      margin: 10mm;
+    }
+
+    @media print {
+      body { background: #fff; padding: 0; }
+      .print-toolbar { display: none !important; }
+      .a4-page {
+        width: 100%;
+        min-height: auto;
+        margin: 0;
+        padding: 4mm 6mm;
+        box-shadow: none;
+        page-break-after: always;
+      }
+      .a4-page:last-child { page-break-after: auto; }
+    }
+
+    /* Header Box */
+    .ws-header {
+      border: 2.5px solid #1e3a5f;
+      border-top: 6px solid #1e3a5f;
+      border-radius: 14px;
+      padding: 12px 16px;
+      background: #fdfbf7;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .ws-title-group {
+      flex: 1;
+    }
+    .ws-tag {
+      display: inline-block;
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #f59e0b;
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 2px 9px;
+      border-radius: 999px;
+      margin-bottom: 4px;
+    }
+    .ws-title {
+      font-size: 1.45rem;
+      font-weight: 900;
+      color: #1e3a5f;
+      letter-spacing: -0.02em;
+    }
+    .ws-subtitle {
+      font-size: 0.84rem;
+      color: #475569;
+      margin-top: 2px;
+      font-weight: 600;
+    }
+
+    .class-info-box {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      background: #fff;
+      border: 1.5px solid #cbd5e1;
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-weight: 800;
+      font-size: 0.92rem;
+      color: #1e3a5f;
+      white-space: nowrap;
+    }
+
+    /* Section Styling */
+    .ws-section {
+      border: 2px solid #cbd5e1;
+      border-radius: 14px;
+      padding: 13px 16px;
+      background: #ffffff;
+    }
+
+    .sec-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 1.5px dashed #cbd5e1;
+    }
+    .sec-title {
+      font-size: 1.02rem;
+      font-weight: 900;
+      color: #1e3a5f;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .sec-badge {
+      background: #1e3a5f;
+      color: #fff;
+      font-size: 0.74rem;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 6px;
+    }
+
+    /* Juror Roster 2 vs 2 */
+    .roster-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .roster-a {
+      background: #eff6ff;
+      border: 1.5px solid #93c5fd;
+      border-radius: 10px;
+      padding: 9px 12px;
+    }
+    .roster-b {
+      background: #fff1f2;
+      border: 1.5px solid #fda4af;
+      border-radius: 10px;
+      padding: 9px 12px;
+    }
+
+    .write-line {
+      border-bottom: 1.5px solid #94a3b8;
+      height: 26px;
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      font-size: 0.86rem;
+      color: #64748b;
+      padding-left: 4px;
+    }
+
+    /* 2 vs 2 Debate Boxes */
+    .debate-2col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    .arg-box-a {
+      background: #f8fbff;
+      border: 2px solid #60a5fa;
+      border-radius: 12px;
+      padding: 12px;
+      min-height: 150px;
+    }
+    .arg-box-b {
+      background: #fff9fa;
+      border: 2px solid #fb7185;
+      border-radius: 12px;
+      padding: 12px;
+      min-height: 150px;
+    }
+    .lined-area p {
+      border-bottom: 1px dashed #cbd5e1;
+      height: 28px;
+      line-height: 28px;
+      font-size: 0.85rem;
+      color: #475569;
+    }
+
+    /* Final Verdict Script Box */
+    .script-box {
+      background: #fffbeb;
+      border: 2px solid #f59e0b;
+      border-radius: 12px;
+      padding: 14px 16px;
+      line-height: 1.9;
+      font-size: 0.94rem;
+      font-weight: 700;
+      color: #1e293b;
+    }
+    .blank-inline {
+      display: inline-block;
+      min-width: 70px;
+      border-bottom: 2px solid #1e3a5f;
+      text-align: center;
+      color: #b45309;
+      padding: 0 6px;
+    }
+
+    /* Page 2: Cutout Juror Cards */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 16px;
+      flex: 1;
+      margin-top: 12px;
+    }
+    .cut-card {
+      border: 2.5px dashed #64748b;
+      border-radius: 18px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      text-align: center;
+    }
+    .cut-card.card-a { background: #eff6ff; border-color: #2563eb; }
+    .cut-card.card-b { background: #fff1f2; border-color: #e11d48; }
+  </style>
+</head>
+<body>
+
+  <!-- Floating Toolbar -->
+  <div class="print-toolbar">
+    <div>
+      <strong style="font-size:1.05rem;">🖨️ [교실 배부용] 우리 반 대법원 : 4개 모둠(2~3 : 2~3) 합의 법정 활동지</strong>
+      <div style="font-size:0.82rem; color:#cbd5e1;">
+        • A4 1장 구성 — 학급당 4모둠(총 4장)만 인쇄하여 모둠별로 1장씩 나누어 주시면 됩니다.
+      </div>
+    </div>
+    <button class="btn-print" onclick="window.print()">🖨️ A4 바로 인쇄하기 (Ctrl+P)</button>
+  </div>
+
+  <!-- ==================== PAGE 1: 2 vs 2 GROUP DISCUSSION WORKSHEET ==================== -->
+  <div class="a4-page">
+    <!-- Top Header -->
+    <div class="ws-header">
+      <svg width="62" height="62" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="60" cy="60" r="56" fill="#FEF3C7" stroke="#F59E0B" stroke-width="4"/>
+        <path d="M28 108C28 86 42 76 60 76C78 76 92 86 92 108" fill="#1E293B"/>
+        <path d="M50 76L60 96L70 76" fill="#FFFFFF"/>
+        <path d="M56 78L60 94L64 78" fill="#B91C1C"/>
+        <circle cx="60" cy="48" r="21" fill="#FDE68A"/>
+        <path d="M36 38L60 26L84 38L60 44L36 38Z" fill="#1E293B"/>
+        <rect x="42" y="34" width="36" height="8" rx="3" fill="#334155"/>
+        <circle cx="52" cy="49" r="2.8" fill="#1E293B"/>
+        <circle cx="68" cy="49" r="2.8" fill="#1E293B"/>
+        <circle cx="52" cy="49" r="6" stroke="#92400E" stroke-width="1.8"/>
+        <circle cx="68" cy="49" r="6" stroke="#92400E" stroke-width="1.8"/>
+        <line x1="58" y1="49" x2="62" y2="49" stroke="#92400E" stroke-width="1.8"/>
+        <path d="M54 59C57 62 63 62 66 59" stroke="#1E293B" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+
+      <div class="ws-title-group">
+        <span class="ws-tag">『사회선생님이 뽑은 우리 사회를 움직인 판결』 독서 연계활동 4</span>
+        <h1 class="ws-title">🏛️ 우리 반 대법원 : 배심원단 모둠 합의 법정</h1>
+        <p class="ws-subtitle">박빙 사건에 대해 A를 선택한 배심원(2~3명)과 B를 선택한 배심원(2~3명)이 한 모둠이 되어 최종 평결을 내립니다!</p>
+      </div>
+
+      <div class="class-info-box">
+        <span>1학년 ( &nbsp;&nbsp;&nbsp;&nbsp; )반</span>
+        <span>|</span>
+        <span>제 ( &nbsp;&nbsp;&nbsp;&nbsp; ) 모둠</span>
+      </div>
+    </div>
+
+    <!-- Step 1: 2~3 : 2~3 Roster & Selected Case -->
+    <div class="ws-section">
+      <div class="sec-head">
+        <div class="sec-title"><span class="sec-badge">STEP 1</span> 우리 모둠 배심원단 구성 (A 2~3명 : B 2~3명) 및 맡은 박빙 사건</div>
+        <div style="font-size:0.8rem; color:#475569; font-weight:700;">
+          박빙 순위: □ 1위 &nbsp; □ 2위 &nbsp; □ 3위 &nbsp;|&nbsp; 문항 번호: <strong>Q.( &nbsp;&nbsp;&nbsp;&nbsp; )번</strong>
+        </div>
+      </div>
+
+      <div class="roster-grid" style="margin-bottom:10px;">
+        <div class="roster-a">
+          <div style="font-size:0.85rem; font-weight:900; color:#1d4ed8;">🅰️ 선택 배심원 (2~3명)</div>
+          <div style="font-size:0.84rem; margin-top:4px; font-weight:700; color:#1e3a8a;">
+            ① ___________ &nbsp; ② ___________ &nbsp; (③ ___________)
+          </div>
+        </div>
+        <div class="roster-b">
+          <div style="font-size:0.85rem; font-weight:900; color:#be123c;">🅱️ 선택 배심원 (2~3명)</div>
+          <div style="font-size:0.84rem; margin-top:4px; font-weight:700; color:#881337;">
+            ① ___________ &nbsp; ② ___________ &nbsp; (③ ___________)
+          </div>
+        </div>
+      </div>
+
+      <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:8px 12px; font-size:0.88rem; font-weight:700;">
+        ⚖️ <strong>우리 모둠이 토의할 박빙 사건 질문 요약:</strong>
+        <span style="color:#94a3b8; font-weight:500;">(예: 절차 어긴 증거 인정 vs 무효)</span>
+        <div class="write-line"></div>
+      </div>
+    </div>
+
+    <!-- Step 2: 2 vs 2 Arguments -->
+    <div class="ws-section">
+      <div class="sec-head">
+        <div class="sec-title"><span class="sec-badge">STEP 2</span> 2 vs 2 양측 배심원 의견 맞대결! (돌아가며 1~2분씩 주장 발표하기)</div>
+        <span style="font-size:0.76rem; color:#64748b;">친구들의 주장을 잘 듣고 핵심 이유를 간단히 적어보세요</span>
+      </div>
+
+      <div class="debate-2col">
+        <div class="arg-box-a">
+          <div style="font-weight:900; color:#1d4ed8; font-size:0.94rem; margin-bottom:6px; display:flex; align-items:center; justify-content:space-between;">
+            <span>🅰️측 배심원 2명의 핵심 근거</span>
+            <span style="font-size:0.75rem; background:#dbeafe; padding:2px 8px; border-radius:999px;">선택 A 입장</span>
+          </div>
+          <div class="lined-area">
+            <p><strong>주장 1:</strong> </p>
+            <p></p>
+            <p><strong>주장 2:</strong> </p>
+            <p></p>
+          </div>
+        </div>
+
+        <div class="arg-box-b">
+          <div style="font-weight:900; color:#be123c; font-size:0.94rem; margin-bottom:6px; display:flex; align-items:center; justify-content:space-between;">
+            <span>🅱️측 배심원 2명의 핵심 근거</span>
+            <span style="font-size:0.75rem; background:#ffe4e6; padding:2px 8px; border-radius:999px;">선택 B 입장</span>
+          </div>
+          <div class="lined-area">
+            <p><strong>주장 1:</strong> </p>
+            <p></p>
+            <p><strong>주장 2:</strong> </p>
+            <p></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: Final Group Vote & Change Check -->
+    <div class="ws-section">
+      <div class="sec-head">
+        <div class="sec-title"><span class="sec-badge">STEP 3</span> 토의 후 우리 모둠의 최종 재투표 결과!</div>
+        <span style="font-size:0.78rem; color:#b45309; font-weight:800;">과연 상대 팀의 논리에 설득되어 마음을 바꾼(환승한) 배심원이 있을까요?</span>
+      </div>
+
+      <div style="display:flex; align-items:center; justify-content:space-around; background:#f8fafc; border:1.5px solid #cbd5e1; border-radius:10px; padding:10px 14px; flex-wrap:wrap; gap:10px;">
+        <div style="font-weight:800; font-size:0.92rem; color:#475569;">
+          토의 전: <strong style="color:#1d4ed8;">🅰️ ( &nbsp;&nbsp; )명</strong> : <strong style="color:#be123c;">🅱️ ( &nbsp;&nbsp; )명</strong>
+        </div>
+        <div style="font-size:1.2rem; font-weight:900; color:#d97706;">➔</div>
+        <div style="font-weight:900; font-size:1.02rem; color:#1e293b;">
+          토의 후 최종 표결: <strong style="color:#1d4ed8;">🅰️ ( &nbsp;&nbsp;&nbsp;&nbsp; )명</strong> &nbsp;:&nbsp; <strong style="color:#be123c;">🅱️ ( &nbsp;&nbsp;&nbsp;&nbsp; )명</strong>
+        </div>
+        <div style="font-size:0.84rem; font-weight:700; color:#334155;">
+          (마음이 바뀐 배심원: □ 있음 &nbsp; □ 없음)
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 4: Spokesperson Presentation Script -->
+    <div class="ws-section" style="border-color:#f59e0b; background:#fffdf7;">
+      <div class="sec-head" style="border-bottom-color:#fcd34d;">
+        <div class="sec-title" style="color:#92400e;">
+          <span class="sec-badge" style="background:#d97706;">STEP 4</span>
+          🔨 우리 모둠 대표 판사의 최종 판결문 발표 대본 (빈칸을 채워 학급 앞에서 읽어주세요!)
+        </div>
+        <div style="font-size:0.84rem; font-weight:900; color:#92400e;">
+          발표자(대표 판사): ( &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; )
+        </div>
+      </div>
+
+      <div class="script-box">
+        “존경하는 재판장님과 우리 반 배심원 여러분! 저희 <span class="blank-inline">&nbsp;&nbsp;&nbsp;&nbsp;</span>모둠은
+        <strong>Q.<span class="blank-inline">&nbsp;&nbsp;&nbsp;&nbsp;</span>번 사건</strong>에 대해 배심원 토의를 진행했습니다.<br/>
+        처음에는 🅰️ <span class="blank-inline" style="min-width:36px;">&nbsp;</span>명, 🅱️ <span class="blank-inline" style="min-width:36px;">&nbsp;</span>명으로 맞섰으나, 토의 과정에서 나온<br/>
+        <span style="display:block; border-bottom:2px solid #92400e; margin:6px 0; height:28px; color:#64748b; font-weight:500; font-size:0.84rem;">
+          &nbsp;(가장 설득력 있었던 핵심 이유 한 줄 적기)
+        </span>
+        라는 주장이 가장 설득력이 있다고 생각하여, 최종적으로 <strong>🅰️ <span class="blank-inline" style="min-width:40px;">&nbsp;&nbsp;</span>명 : 🅱️ <span class="blank-inline" style="min-width:40px;">&nbsp;&nbsp;</span>명</strong>으로
+        <strong>[ □ 🅰️ 승 &nbsp;/ □ 🅱️ 승 &nbsp;/ □ 동점 무승부 ]</strong> 판결을 내렸습니다! 땅땅땅! 🔨”
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
